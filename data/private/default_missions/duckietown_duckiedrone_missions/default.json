@@ -73,9 +73,10 @@
 					"service_override_commands": "",
 					"param_override_prefix": "~/fly_commands_mux_node\/",
 					"topic_mode_current": "~/flight_controller_node\/mode\/current",
-					"topic_control": "~/fly_commands_mux_node\/commands\/manual",
+					"topic_control": "~/mavros/manual_control/send",
 					"topic_commands": "~/flight_controller_node\/commands\/executed",
-					"frequency": 5,
+					"frequency": 30,
+					"max_roll_pitch": 300,
 					"min_value": 1000,
 					"max_value": 2000,
 					"background_color": "#fff"

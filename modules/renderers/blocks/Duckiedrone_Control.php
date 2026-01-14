@@ -55,6 +55,12 @@ class Duckiedrone_Control extends BlockRenderer {
             "default" => 10,
             "mandatory" => True
         ],
+        "max_roll_pitch" => [
+            "name" => "Max Roll/Pitch (D-pad)",
+            "type" => "numeric",
+            "mandatory" => False,
+            "default" => 300
+        ],
         "min_value" => [
             "name" => "Minimum value",
             "type" => "numeric",
@@ -165,6 +171,7 @@ class Duckiedrone_Control extends BlockRenderer {
             const CONST_MID_VAL = 1500;
             
             const CONST_JOY_YAW_DEADBAND = 20;
+            const CONST_MAX_ROLL_PITCH = <?php echo $args['max_roll_pitch'] ?? self::$ARGUMENTS['max_roll_pitch']['default'] ?>;
             
             function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color) {
                 //variables to be used when creating the arrow
@@ -216,12 +223,13 @@ class Duckiedrone_Control extends BlockRenderer {
                     this.yaw = cw_ccw;
                 }
             
-                get droneControlMsg() {
+                get manualControlMsg() {
                     return {
-                        roll: this.roll,
-                        pitch: this.pitch,
-                        yaw: this.yaw,
-                        throttle: this.throttle
+                        x: this.roll,      // int16 [-1000, 1000]
+                        y: this.pitch,     // int16 [-1000, 1000]
+                        z: this.throttle,  // int16 [-1000, 1000]
+                        r: this.yaw,       // int16 [-1000, 1000]
+                        buttons: 0         // uint16
                     };
                 }
             }
@@ -338,17 +346,18 @@ class Duckiedrone_Control extends BlockRenderer {
                 (new ROSLIB.Topic({
                     ros: window.ros['<?php echo $ros_hostname ?>'],
                     name: '<?php echo $args["topic_commands"] ?>',
-                    messageType: 'duckietown_msgs/DroneControl',
+                    messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1,
                     throttle_rate: <?php echo 1000 / $args['frequency'] ?>
                 })).subscribe(function (message) {
-                    let r = Math.floor(((message.roll - <?php echo $args['min_value'] ?>) / range) * 100);
+                    // convert normalized values [-1000, 1000] to percentages [0, 100]
+                    let r = Math.floor(((message.x + 1000) / 2000) * 100);
                     roll_bar.width("{0}%".format(r));
-                    let p = Math.floor(((message.pitch - <?php echo $args['min_value'] ?>) / range) * 100);
+                    let p = Math.floor(((message.y + 1000) / 2000) * 100);
                     pitch_bar.width("{0}%".format(p));
-                    let y = Math.floor(((message.yaw - <?php echo $args['min_value'] ?>) / range) * 100);
+                    let y = Math.floor(((message.r + 1000) / 2000) * 100);
                     yaw_bar.width("{0}%".format(y));
-                    let t = Math.floor(((message.throttle - <?php echo $args['min_value'] ?>) / range) * 100);
+                    let t = Math.floor(((message.z + 1000) / 2000) * 100);
                     throttle_bar.width("{0}%".format(t));
                 });
                 
@@ -367,12 +376,21 @@ class Duckiedrone_Control extends BlockRenderer {
                 const joystick_topic = new ROSLIB.Topic({
                     ros: window.ros['<?php echo $ros_hostname ?>'],
                     name: '<?php echo $args["topic_control"] ?>',
-                    messageType: 'duckietown_msgs/DroneControl',
+                    messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1
                 });
                 
                 function publish_joy_cmd(joy_axes, joy_buttons) {
-                    let msg = new ROSLIB.Message(joy_axes.droneControlMsg)
+                    let control_msg = joy_axes.manualControlMsg;
+                    // add header with timestamp
+                    control_msg.header = {
+                        stamp: {
+                            secs: Math.floor(Date.now() / 1000),
+                            nsecs: (Date.now() % 1000) * 1000000
+                        },
+                        frame_id: ''
+                    };
+                    let msg = new ROSLIB.Message(control_msg);
                     joystick_topic.publish(msg);
                 }
                 
@@ -386,11 +404,14 @@ class Duckiedrone_Control extends BlockRenderer {
                 function map_to_real(k_front, k_back, k_left, k_right) {
                     let x = parseInt(joy_stick_data.x);
                     let y = parseInt(joy_stick_data.y);
-                    if (y < 0) y = 0;
-                    let throttle = Math.round((y / 100.0) * 500 + 1100);
+                    // throttle: map joystick Y (-100 to 100) to [0, 1000]
+                    // y=-100 -> 0, y=0 -> 500, y=100 -> 1000
+                    let throttle = Math.round((y + 100) * 5);
+                    
                     // deadzone for yaw
                     if (Math.abs(x) < CONST_JOY_YAW_DEADBAND) x = 0;
-                    let yaw = Math.round(x / 100.0 * CONST_YAW_DELTA + CONST_MID_VAL);
+                    // yaw: map joystick X (-100 to 100) to [-1000, 1000]
+                    let yaw = Math.round(x * 10);
                 
                     let k_pitch = 0;
                     if (k_front) {
@@ -398,7 +419,8 @@ class Duckiedrone_Control extends BlockRenderer {
                     } else if (k_back) {
                         k_pitch = -1;
                     }
-                    let pitch = CONST_PITCH_DELTA * k_pitch + CONST_MID_VAL;
+                    // pitch: discrete values -CONST_MAX_ROLL_PITCH, 0, or CONST_MAX_ROLL_PITCH
+                    let pitch = k_pitch * CONST_MAX_ROLL_PITCH;
                     
                     let k_roll = 0;
                     if (k_left) {
@@ -406,7 +428,8 @@ class Duckiedrone_Control extends BlockRenderer {
                     } else if (k_right) {
                         k_roll = 1;
                     }
-                    let roll = CONST_ROLL_DELTA * k_roll + CONST_MID_VAL;
+                    // roll: discrete values -CONST_MAX_ROLL_PITCH, 0, or CONST_MAX_ROLL_PITCH
+                    let roll = k_roll * CONST_MAX_ROLL_PITCH;
                     
                     return new JoyAxes(roll, pitch, yaw, throttle);
                 }
