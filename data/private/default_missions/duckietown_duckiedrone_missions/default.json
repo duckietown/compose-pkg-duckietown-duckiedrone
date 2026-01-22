@@ -73,9 +73,10 @@
 					"service_override_commands": "",
 					"param_override_prefix": "~/fly_commands_mux_node\/",
 					"topic_mode_current": "~/flight_controller_node\/mode\/current",
-					"topic_control": "~/fly_commands_mux_node\/commands\/manual",
+					"topic_control": "~/mavros/manual_control/send",
 					"topic_commands": "~/flight_controller_node\/commands\/executed",
-					"frequency": 5,
+					"frequency": 30,
+					"max_roll_pitch": 300,
 					"min_value": 1000,
 					"max_value": 2000,
 					"background_color": "#fff"
@@ -91,10 +92,10 @@
                 "subtitle": "WARNING: This will activate the propellers",
                 "args": {
                     "ros_hostname": "",
+                    "arming_service": "~/mavros\/cmd\/arming",
                     "kill_switch": "~/mavros\/cmd\/command",
-                    "arming_service": "~/flight_controller_node\/arm",
-					"set_mode_service": "~/flight_controller_node\/set_mode",
-					"state_topic": "~/flight_controller_node\/mode\/current",
+					"set_mode_service": "~/mavros\/set_mode",
+					"state_topic": "~/mavros\/state",
                     "frequency": 10,
                     "background_color": "#fff"
                 }
@@ -138,10 +139,10 @@
                 },
                 "renderer": "SensorMsgs_IMU_Orientation",
                 "title": "IMU - Orientation",
-                "subtitle": "/imu_node/data",
+                "subtitle": "~/mavros/imu/data",
                 "args": {
                     "ros_hostname": "",
-                    "topic": "~/imu_node/data",
+                    "topic": "~/mavros/imu/data",
                     "service_1": "~/flight_controller_node/calibrate_imu",
                     "service_2": "~/flight_controller_node/zero_yaw",
                     "fps": 5
