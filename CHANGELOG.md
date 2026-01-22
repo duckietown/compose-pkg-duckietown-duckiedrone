@@ -1,3 +1,9 @@
+## 2.1.0 (January 22, 2026)
+  - Merge pull request #4 from Tuxliri/update-arming-widget-DTSW-7558
+  - feat(arming): complete widget refactor with improved UX
+  - Update control topics and parameters for MAVROS integration; adjust frequency and add max roll/pitch setting
+  - Update arming and mode services to use MAVROS endpoints; add takeoff and emergency kill buttons
+
 ## 2.0.3 (October 03, 2024)
   - Increased controll authority on roll and pitch
   - Fixed arming service for kill switch
