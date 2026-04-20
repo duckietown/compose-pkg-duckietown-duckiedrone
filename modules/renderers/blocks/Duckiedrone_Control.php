@@ -155,13 +155,9 @@ class Duckiedrone_Control extends BlockRenderer {
             }
             ?>
         </table>
-        
-        <?php
-        $ros_hostname = $args['ros_hostname'] ?? null;
-        $ros_hostname = ROS::sanitize_hostname($ros_hostname);
-        $connected_evt = ROS::get_event(ROS::$ROSBRIDGE_CONNECTED, $ros_hostname);
-        ?>
 
+        <!-- Include ROS Configuration Discovery -->
+        <script src="<?php echo Core::getJSscriptURL('ros-config.js', 'duckietown_duckiedrone') ?>"></script>
         <!-- Include ROS -->
         <script src="<?php echo Core::getJSscriptURL('rosdb.js', 'ros') ?>"></script>
         <!-- Include Joy library -->
@@ -259,55 +255,79 @@ class Duckiedrone_Control extends BlockRenderer {
                 }
             }
       
-            $(document).on("<?php echo $connected_evt ?>", function (evt) {
-                // TODO: this is the right way to do it
-                let set_override_srv = new ROSLIB.Service({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name : '<?php echo $args['service_override_commands'] ?>',
-                    messageType : 'duckietown_msgs/SetDroneCommandsOverride'
-                });
-                
-                let roll_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>roll_override',
-                });
-                roll_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_roll').bootstrapToggle(status);
-                });
-                
-                let pitch_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>pitch_override',
-                });
-                pitch_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_pitch').bootstrapToggle(status);
-                });
-                
-                let yaw_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>yaw_override',
-                });
-                yaw_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_yaw').bootstrapToggle(status);
-                });
-                
-                let throttle_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>throttle_override',
-                });
-                throttle_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_throttle').bootstrapToggle(status);
-                });
-                
-                let set_mode_srv = new ROSLIB.Service({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name : '<?php echo $args['service_set_mode'] ?>',
-                    messageType : 'duckietown_msgs/SetDroneMode'
-                });
+            // Initialize ROS configuration discovery and set up widget
+            (async function initializeWidget() {
+                try {
+                    // Discover ROS configuration at runtime (works with proxies!)
+                    let config = await ROSConfig.init();
+                    let ros_hostname = config.vehicle_name;
+                    
+                    console.log('[Duckiedrone_Control] Using discovered robot:', ros_hostname);
+                    
+                    // Ensure ROSbridge connection exists for this hostname
+                    if (!window.ros || !window.ros[ros_hostname]) {
+                        console.warn('[Duckiedrone_Control] Waiting for ROSbridge connection...');
+                        // Wait a bit for rosdb.js to establish connection
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    // If still no connection, try to initialize one
+                    if (!window.ros || !window.ros[ros_hostname]) {
+                        console.log('[Duckiedrone_Control] Creating ROS connection to', config.rosbridge_url);
+                        window.ros = window.ros || {};
+                        window.ros[ros_hostname] = new ROSLIB.Ros({
+                            url: config.rosbridge_url
+                        });
+                    }
+                    
+                    // TODO: this is the right way to do it
+                    let set_override_srv = new ROSLIB.Service({
+                        ros: window.ros[ros_hostname],
+                        name : '<?php echo $args['service_override_commands'] ?>',
+                        messageType : 'duckietown_msgs/SetDroneCommandsOverride'
+                    });
+                    
+                    let roll_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>roll_override',
+                    });
+                    roll_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_roll').bootstrapToggle(status);
+                    });
+                    
+                    let pitch_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>pitch_override',
+                    });
+                    pitch_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_pitch').bootstrapToggle(status);
+                    });
+                    
+                    let yaw_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>yaw_override',
+                    });
+                    yaw_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_yaw').bootstrapToggle(status);
+                    });
+                    
+                    let throttle_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>throttle_override',
+                    });
+                    throttle_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_throttle').bootstrapToggle(status);
+                    });
+                    
+                    let set_mode_srv = new ROSLIB.Service({
+                        ros: window.ros[ros_hostname],
+                        name : '<?php echo $args['service_set_mode'] ?>',
+                        messageType : 'duckietown_msgs/SetDroneMode'
+                    });
             
                 let ctx = document.getElementById("drone_control_commands_joy_keys").getContext('2d');
                 
@@ -448,7 +468,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 
                 // subscribe to control signals
                 (new ROSLIB.Topic({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
+                    ros: window.ros[ros_hostname],
                     name: '<?php echo $args["topic_commands"] ?>',
                     messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1,
@@ -467,7 +487,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 
                 //subscribe to mode
                 (new ROSLIB.Topic({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
+                    ros: window.ros[ros_hostname],
                     name: '<?php echo $args["topic_mode_current"] ?>',
                     messageType: 'mavros_msgs/State',
                     queue_size: 1,
@@ -478,7 +498,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 
                 // joystick commands publisher
                 const joystick_topic = new ROSLIB.Topic({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
+                    ros: window.ros[ros_hostname],
                     name: '<?php echo $args["topic_control"] ?>',
                     messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1
@@ -598,11 +618,16 @@ class Duckiedrone_Control extends BlockRenderer {
                 }
                 
                 setInterval(main_loop, 50);
-            });
+                    
+                } catch (err) {
+                    console.error('[Duckiedrone_Control] Failed to initialize widget:', err);
+                }
+            })();
         </script>
         
         <?php
-        ROS::connect($ros_hostname);
+        // Note: ROS::connect() is no longer needed here since widgets use runtime discovery
+        // via ROSConfig.init(). The old event-based pattern is replaced with async/await.
         ?>
 
         <style type="text/css">
