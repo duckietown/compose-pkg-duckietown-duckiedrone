@@ -22,25 +22,25 @@ class Mavros_Arming extends BlockRenderer {
             "name" => "Arming Service",
             "type" => "text",
             "mandatory" => True,
-            "default" => "~/mavros/cmd/arming"
+            "default" => "/mavros/cmd/arming"
         ],
         "kill_switch" => [
             "name" => "Kill Switch Service",
             "type" => "text",
             "mandatory" => True,
-            "default" => "~/mavros/cmd/command"
+            "default" => "/mavros/cmd/command"
         ],
         "set_mode_service" => [
             "name" => "Set Mode Service",
             "type" => "text",
             "mandatory" => True,
-            "default" => "~/mavros/set_mode"
+            "default" => "/mavros/set_mode"
         ],
         "state_topic" => [
             "name" => "State Topic",
             "type" => "text",
             "mandatory" => True,
-            "default" => "~/mavros/state"
+            "default" => "/mavros/state"
         ],
         "frequency" => [
             "name" => "Frequency (Hz)",
@@ -75,19 +75,19 @@ class Mavros_Arming extends BlockRenderer {
                 <div id="arming_status_message" style="margin-top: 3px; font-size: 8pt; color: #d9534f; min-height: 12px;"></div>
             </div>
             
-            <!-- FLIGHT MODE Toggle (1/3) -->
+            <!-- FLIGHT MODE 3-way selector (1/3) -->
             <div style="flex: 1; text-align: center;">
                 <div style="margin-bottom: 3px; font-size: 9pt; font-weight: bold;">FLIGHT MODE</div>
-                <input type="checkbox"
-                       data-toggle="toggle"
-                       data-on="OFFBOARD"
-                       data-onstyle="primary"
-                       data-off="ALTITUDE"
-                       data-offstyle="info"
-                       data-class="fast"
-                       data-size="small"
-                       name="drone_mode_toggle"
-                       id="drone_mode_toggle">
+                <div class="btn-group btn-group-xs" role="group" id="drone_mode_selector"
+                     style="display: inline-flex;">
+                    <button type="button" class="btn btn-default" data-mode="AUTO.LOITER"
+                            title="PX4 AUTO.LOITER — position/altitude hold, safe armable default">LOITER</button>
+                    <button type="button" class="btn btn-default" data-mode="ALTCTL"
+                            title="PX4 ALTCTL — manual stick with altitude hold">ALTITUDE</button>
+                    <button type="button" class="btn btn-default" data-mode="OFFBOARD"
+                            title="PX4 OFFBOARD — external setpoints">OFFBOARD</button>
+                </div>
+                <div id="mode_status_message" style="margin-top: 3px; font-size: 8pt; color: #d9534f; min-height: 12px;"></div>
             </div>
             
             <!-- Stacked Buttons (1/3) -->
@@ -122,15 +122,18 @@ class Mavros_Arming extends BlockRenderer {
         <script src="<?php echo Core::getJSscriptURL('rosdb.js', 'ros') ?>"></script>
 
         <script type="text/javascript">
+            let _MODE_LOITER = 'AUTO.LOITER';
             let _MODE_ALTITUDE = 'ALTCTL';
             let _MODE_OFFBOARD = 'OFFBOARD';
             let _MODE_AUTO_TAKEOFF = 'AUTO.TAKEOFF';
             let _MODE_AUTO_LAND = 'AUTO.LAND';
-            
+            let _SELECTABLE_MODES = [_MODE_LOITER, _MODE_ALTITUDE, _MODE_OFFBOARD];
+
             // Track states
             let isArmed = false;
             let isFlying = false;
-            let currentMode = _MODE_ALTITUDE;
+            let currentMode = null;   // unknown until first /mavros/state message
+            let _syncing = false;     // true while programmatically updating toggles — suppress change handlers
 
             $(document).on("<?php echo $connected_evt ?>", function (evt) {
                 let arming_srv = new ROSLIB.Service({
@@ -376,6 +379,7 @@ class Mavros_Arming extends BlockRenderer {
                 }
 
                 $('#<?php echo $id ?> #drone_arming_toggle').off().change(function() {
+                    if (_syncing) return;
                     let checked = $(this).prop('checked');
                     console.log("Arming toggle changed. Setting armed to:", checked);
                     
@@ -438,18 +442,34 @@ class Mavros_Arming extends BlockRenderer {
                     });
                 });
 
-                $('#<?php echo $id ?> #drone_mode_toggle').off().change(function() {
-                    let checked = $(this).prop('checked');
-                    let mode = checked ? _MODE_OFFBOARD : _MODE_ALTITUDE;
-                    console.log("Mode toggle changed. Setting mode to:", mode);
+                // Helper: visually mark the selected mode button without firing its click handler.
+                function highlight_mode_button(mode) {
+                    let grp = $('#<?php echo $id ?> #drone_mode_selector');
+                    grp.find('button').removeClass('btn-primary btn-info active')
+                                      .addClass('btn-default');
+                    if (mode === null) return;
+                    let btn = grp.find('button[data-mode="' + mode + '"]');
+                    if (btn.length) {
+                        btn.removeClass('btn-default')
+                           .addClass(mode === _MODE_OFFBOARD ? 'btn-primary' : 'btn-info')
+                           .addClass('active');
+                    }
+                }
+
+                $('#<?php echo $id ?> #drone_mode_selector button').off().click(function() {
+                    if (_syncing) return;
+                    let mode = $(this).data('mode');
+                    if (!mode || mode === currentMode) return;
+                    console.log("Mode button clicked. Requesting mode:", mode);
+                    $('#<?php echo $id ?> #mode_status_message').text('');
                     set_mode(mode, function(response) {
                         if (response.mode_sent) {
-                            currentMode = mode;
-                            console.log("Mode successfully set to:", mode);
+                            // Do not update currentMode here — let the state topic confirm.
+                            console.log("Mode change request accepted by MAVROS:", mode);
                         } else {
                             console.error("Failed to set mode to:", mode);
-                            // Revert toggle on failure
-                            $('#<?php echo $id ?> #drone_mode_toggle').bootstrapToggle(checked ? 'off' : 'on');
+                            $('#<?php echo $id ?> #mode_status_message').text(
+                                'Mode change rejected (MAVROS did not forward to PX4).');
                         }
                     });
                 });
@@ -478,17 +498,27 @@ class Mavros_Arming extends BlockRenderer {
                     queue_size: 1,
                     throttle_rate: <?php echo 1000 / $args['frequency'] ?>
                 })).subscribe(function (message) {
-                    // Update arming toggle only if state changed
-                    if (message.armed !== isArmed) {
-                        $('#<?php echo $id ?> #drone_arming_toggle').bootstrapToggle(message.armed ? 'on' : 'off');
-                        isArmed = message.armed;
-                    }
-                    
-                    // Update mode toggle only if state changed from our tracked mode
-                    if (message.mode !== currentMode) {
-                        currentMode = message.mode;
-                        let isOffboard = message.mode === _MODE_OFFBOARD;
-                        $('#<?php echo $id ?> #drone_mode_toggle').bootstrapToggle(isOffboard ? 'on' : 'off');
+                    // Sync toggles from PX4/MAVROS state — programmatic updates only,
+                    // suppress the change/click handlers so they don't fire a redundant
+                    // set_arming / set_mode call back to the drone (which used to push the
+                    // drone into ALTCTL on page load).
+                    _syncing = true;
+                    try {
+                        if (message.armed !== isArmed) {
+                            $('#<?php echo $id ?> #drone_arming_toggle')
+                                .bootstrapToggle(message.armed ? 'on' : 'off');
+                            isArmed = message.armed;
+                        }
+                        if (message.mode !== currentMode) {
+                            currentMode = message.mode;
+                            // Only highlight the button if the reported mode is one of the
+                            // three selectable modes; otherwise clear selection (e.g. AUTO.TAKEOFF,
+                            // AUTO.LAND, MANUAL, etc. are transient and not user-selectable here).
+                            let shown = _SELECTABLE_MODES.indexOf(message.mode) >= 0 ? message.mode : null;
+                            highlight_mode_button(shown);
+                        }
+                    } finally {
+                        _syncing = false;
                     }
                 });
             });

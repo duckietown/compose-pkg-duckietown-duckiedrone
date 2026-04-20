@@ -92,10 +92,10 @@
                 "subtitle": "WARNING: This will activate the propellers",
                 "args": {
                     "ros_hostname": "",
-                    "arming_service": "~/mavros\/cmd\/arming",
-                    "kill_switch": "~/mavros\/cmd\/command",
-					"set_mode_service": "~/mavros\/set_mode",
-					"state_topic": "~/mavros\/state",
+                    "arming_service": "/mavros\/cmd\/arming",
+                    "kill_switch": "/mavros\/cmd\/command",
+					"set_mode_service": "/mavros\/set_mode",
+					"state_topic": "/mavros\/state",
                     "frequency": 10,
                     "background_color": "#fff"
                 }
