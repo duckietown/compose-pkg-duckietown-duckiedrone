@@ -1,3 +1,7 @@
+## 2.2.1 (April 20, 2026)
+  - fix(arming): unify button styling and switch to CSS-grid layout (ARM/DISARM | FLIGHT MODE | ACTIONS) so the stacked mode buttons no longer clip
+  - fix(mission): bump Mavros_Arming block to rows:2 to accommodate the vertical LOITER/ALTITUDE/OFFBOARD stack
+
 ## 2.2.0 (April 20, 2026)
   - feat(arming): 3-way flight-mode selector (LOITER / ALTITUDE / OFFBOARD) replaces the OFFBOARD/ALTITUDE checkbox
   - fix(arming): suppress state-sync change events on page load (prevents spurious set_mode calls that pushed the drone out of LOITER)

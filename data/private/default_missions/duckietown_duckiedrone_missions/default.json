@@ -84,7 +84,7 @@
 			},
             {
                 "shape": {
-                    "rows": 1,
+                    "rows": 2,
                     "cols": 3
                 },
                 "renderer": "Mavros_Arming",

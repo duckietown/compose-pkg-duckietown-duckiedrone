@@ -58,10 +58,56 @@ class Mavros_Arming extends BlockRenderer {
 
     protected static function render($id, &$args) {
         ?>
-        <div style="display: flex; height: 100%; width: 100%; align-items: center; justify-content: space-around; padding: 5px; box-sizing: border-box;">
-            <!-- ARM/DISARM Toggle (1/3) -->
-            <div style="flex: 1; text-align: center;">
-                <div style="margin-bottom: 3px; font-size: 9pt; font-weight: bold;">ARM / DISARM</div>
+        <style type="text/css">
+            #<?php echo $id ?> .arming-widget-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                column-gap: 8px;
+                row-gap: 4px;
+                height: 100%;
+                width: 100%;
+                padding: 5px;
+                box-sizing: border-box;
+                align-items: start;
+                justify-items: center;
+            }
+            #<?php echo $id ?> .arming-widget-grid .col-label {
+                font-size: 9pt;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 3px;
+            }
+            #<?php echo $id ?> .arming-widget-grid .col {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            #<?php echo $id ?> .arming-widget-grid .status-msg {
+                margin-top: 3px;
+                font-size: 8pt;
+                color: #d9534f;
+                min-height: 12px;
+                text-align: center;
+            }
+            #<?php echo $id ?> .arming-widget-grid .arming-btn,
+            #<?php echo $id ?> .arming-widget-grid .btn-group-vertical > .btn {
+                font-size: 9pt;
+                padding: 3px 6px;
+                width: 90px;
+            }
+            #<?php echo $id ?> .arming-widget-grid .btn-stack {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                align-items: center;
+            }
+        </style>
+
+        <div class="arming-widget-grid">
+            <!-- Col 1 — ARM / DISARM toggle -->
+            <div class="col">
+                <div class="col-label">ARM / DISARM</div>
                 <input type="checkbox"
                        data-toggle="toggle"
                        data-on="ARMED"
@@ -72,14 +118,13 @@ class Mavros_Arming extends BlockRenderer {
                        data-size="small"
                        name="drone_arming_toggle"
                        id="drone_arming_toggle">
-                <div id="arming_status_message" style="margin-top: 3px; font-size: 8pt; color: #d9534f; min-height: 12px;"></div>
+                <div id="arming_status_message" class="status-msg"></div>
             </div>
-            
-            <!-- FLIGHT MODE 3-way selector (1/3) -->
-            <div style="flex: 1; text-align: center;">
-                <div style="margin-bottom: 3px; font-size: 9pt; font-weight: bold;">FLIGHT MODE</div>
-                <div class="btn-group btn-group-xs" role="group" id="drone_mode_selector"
-                     style="display: inline-flex;">
+
+            <!-- Col 2 — FLIGHT MODE selector, stacked vertically -->
+            <div class="col">
+                <div class="col-label">FLIGHT MODE</div>
+                <div class="btn-group-vertical btn-group-xs" role="group" id="drone_mode_selector">
                     <button type="button" class="btn btn-default" data-mode="AUTO.LOITER"
                             title="PX4 AUTO.LOITER — position/altitude hold, safe armable default">LOITER</button>
                     <button type="button" class="btn btn-default" data-mode="ALTCTL"
@@ -87,28 +132,30 @@ class Mavros_Arming extends BlockRenderer {
                     <button type="button" class="btn btn-default" data-mode="OFFBOARD"
                             title="PX4 OFFBOARD — external setpoints">OFFBOARD</button>
                 </div>
-                <div id="mode_status_message" style="margin-top: 3px; font-size: 8pt; color: #d9534f; min-height: 12px;"></div>
+                <div id="mode_status_message" class="status-msg"></div>
             </div>
-            
-            <!-- Stacked Buttons (1/3) -->
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;">
-                <button type="button" 
-                        class="btn btn-success btn-xs" 
-                        id="drone_takeoff_button"
-                        disabled
-                        title="Takeoff disabled - use manual altitude control"
-                        style="font-size: 9pt; padding: 3px 6px; width: 90px; opacity: 0.5;">
-                    <i class="fa fa-plane" style="margin-right: 3px;"></i>
-                    TAKEOFF
-                </button>
-                <button type="button" 
-                        class="btn btn-danger btn-xs" 
-                        id="drone_kill_switch_button"
-                        title="Emergency Kill Switch - Force disarm immediately"
-                        style="font-size: 9pt; padding: 3px 6px; width: 90px;">
-                    <i class="fa fa-bolt" style="margin-right: 3px;"></i>
-                    KILL
-                </button>
+
+            <!-- Col 3 — Stacked TAKEOFF / KILL buttons -->
+            <div class="col">
+                <div class="col-label">ACTIONS</div>
+                <div class="btn-stack">
+                    <button type="button"
+                            class="btn btn-success btn-xs arming-btn"
+                            id="drone_takeoff_button"
+                            disabled
+                            title="Takeoff disabled — use manual altitude control"
+                            style="opacity: 0.5;">
+                        <i class="fa fa-plane" style="margin-right: 3px;"></i>
+                        TAKEOFF
+                    </button>
+                    <button type="button"
+                            class="btn btn-danger btn-xs arming-btn"
+                            id="drone_kill_switch_button"
+                            title="Emergency Kill Switch — Force disarm immediately">
+                        <i class="fa fa-bolt" style="margin-right: 3px;"></i>
+                        KILL
+                    </button>
+                </div>
             </div>
         </div>
         
