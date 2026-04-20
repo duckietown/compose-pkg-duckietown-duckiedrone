@@ -99,6 +99,9 @@ class Duckiedrone_Control extends BlockRenderer {
                 </td>
                 <td rowspan="5" class="col-md-2 text-center" style="padding: 0">
                     <div id="drone_control_commands_joy_stick" style="width:160px;height:160px;margin:0;"></div>
+                    <div id="drone_control_commands_gamepad_status" style="font-size: 11px; margin-top: 6px; color: #8a8a8a;">
+                        Controller: not detected
+                    </div>
                 </td>
             </tr>
             <?php
@@ -171,6 +174,8 @@ class Duckiedrone_Control extends BlockRenderer {
             const CONST_MID_VAL = 1500;
             
             const CONST_JOY_YAW_DEADBAND = 20;
+            const CONST_GAMEPAD_AXIS_DEADBAND = 0.12;
+            const CONST_GAMEPAD_TRIGGER_DEADBAND = 0.05;
             const CONST_MAX_ROLL_PITCH = <?php echo $args['max_roll_pitch'] ?? self::$ARGUMENTS['max_roll_pitch']['default'] ?>;
             
             function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color) {
@@ -310,6 +315,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 let pitch_bar = $('#<?php echo $id ?> #drone_control_commands_bar_pitch');
                 let yaw_bar = $('#<?php echo $id ?> #drone_control_commands_bar_yaw');
                 let throttle_bar = $('#<?php echo $id ?> #drone_control_commands_bar_throttle');
+                let gamepad_status = $('#<?php echo $id ?> #drone_control_commands_gamepad_status');
                 
                 let range = (<?php echo $args['max_value'] ?> - <?php echo $args['min_value'] ?>).toFixed(1);
                 
@@ -319,8 +325,106 @@ class Duckiedrone_Control extends BlockRenderer {
                     joy_stick_data.y = data.y;
                 });
                 let joy_keys = new Set([]);
+                let active_gamepad_id = null;
                 
                 let armed = false;
+
+                function clamp(value, min, max) {
+                    return Math.min(Math.max(value, min), max);
+                }
+
+                function apply_deadband(value, deadband) {
+                    return Math.abs(value) < deadband ? 0 : value;
+                }
+
+                function set_controller_status(text, color) {
+                    gamepad_status.text(text);
+                    gamepad_status.css('color', color);
+                }
+
+                function get_gamepads() {
+                    if (!navigator.getGamepads) {
+                        return [];
+                    }
+                    return navigator.getGamepads();
+                }
+
+                function get_gamepad_by_id(target_id) {
+                    if (target_id === null) {
+                        return null;
+                    }
+                    let gamepads = get_gamepads();
+                    for (let gamepad of gamepads) {
+                        if (gamepad && gamepad.id === target_id && gamepad.connected) {
+                            return gamepad;
+                        }
+                    }
+                    return null;
+                }
+
+                function get_active_gamepad() {
+                    let current = get_gamepad_by_id(active_gamepad_id);
+                    if (current) {
+                        return current;
+                    }
+                    let gamepads = get_gamepads();
+                    for (let gamepad of gamepads) {
+                        if (gamepad && gamepad.connected) {
+                            active_gamepad_id = gamepad.id;
+                            return gamepad;
+                        }
+                    }
+                    active_gamepad_id = null;
+                    return null;
+                }
+
+                function read_gamepad_axes() {
+                    let gamepad = get_active_gamepad();
+                    if (!gamepad) {
+                        set_controller_status('Controller: not detected', '#8a8a8a');
+                        return null;
+                    }
+
+                    // Standard Gamepad mapping: left stick controls roll/pitch, right stick X controls yaw,
+                    // and triggers are combined for throttle.
+                    let left_x = apply_deadband(gamepad.axes[0] || 0, CONST_GAMEPAD_AXIS_DEADBAND);
+                    let left_y = apply_deadband(gamepad.axes[1] || 0, CONST_GAMEPAD_AXIS_DEADBAND);
+                    let right_x = apply_deadband(gamepad.axes[2] || 0, CONST_GAMEPAD_AXIS_DEADBAND);
+
+                    let left_trigger = 0;
+                    let right_trigger = 0;
+                    if (gamepad.buttons[6]) {
+                        left_trigger = apply_deadband(gamepad.buttons[6].value || 0, CONST_GAMEPAD_TRIGGER_DEADBAND);
+                    }
+                    if (gamepad.buttons[7]) {
+                        right_trigger = apply_deadband(gamepad.buttons[7].value || 0, CONST_GAMEPAD_TRIGGER_DEADBAND);
+                    }
+
+                    let roll = Math.round(clamp(left_x, -1, 1) * 1000);
+                    let pitch = Math.round(clamp(-left_y, -1, 1) * 1000);
+                    let yaw = Math.round(clamp(right_x, -1, 1) * 1000);
+
+                    // Trigger differential centers throttle around hover-ish midpoint (500),
+                    // then saturates to [0, 1000].
+                    let throttle_delta = clamp(right_trigger - left_trigger, -1, 1);
+                    let throttle = clamp(Math.round(500 + throttle_delta * 500), 0, 1000);
+
+                    set_controller_status('Controller: connected', '#3c763d');
+                    return new JoyAxes(roll, pitch, yaw, throttle);
+                }
+
+                window.addEventListener('gamepadconnected', (_) => {
+                    set_controller_status('Controller: connected', '#3c763d');
+                });
+
+                window.addEventListener('gamepaddisconnected', (_) => {
+                    active_gamepad_id = null;
+                    set_controller_status('Controller: not detected', '#8a8a8a');
+                });
+
+                if (!navigator.getGamepads) {
+                    set_controller_status('Controller: unsupported by browser', '#8a8a8a');
+                }
             
                 $('#<?php echo $id ?> #drone_control_commands_override_roll').change(function() {
                     let checked = $(this).prop('checked');
@@ -486,7 +590,10 @@ class Duckiedrone_Control extends BlockRenderer {
                     drawArrow(ctx, ...pos.left, line_width, left ? 'green' : 'gray');
                     drawArrow(ctx, ...pos.right, line_width, right ? 'green' : 'gray');
                     
-                    let joy_axes = map_to_real(front, back, left, right);
+                    let joy_axes = read_gamepad_axes();
+                    if (joy_axes === null) {
+                        joy_axes = map_to_real(front, back, left, right);
+                    }
                     publish_joy_cmd(joy_axes, {});
                 }
                 

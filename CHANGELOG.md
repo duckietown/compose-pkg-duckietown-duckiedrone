@@ -2,6 +2,7 @@
   - feat(arming): 3-way flight-mode selector (LOITER / ALTITUDE / OFFBOARD) replaces the OFFBOARD/ALTITUDE checkbox
   - fix(arming): suppress state-sync change events on page load (prevents spurious set_mode calls that pushed the drone out of LOITER)
   - fix(mission): use absolute `/mavros/*` paths in the default mission so widgets work under rosbridge's `~` namespace on virtual drones
+  - feat(control): add browser Gamepad API support to Duckiedrone_Control with controller-priority input and keyboard/virtual-joystick fallback
   - docs: rewrite README with widget authoring guide, dev workflow, and known-issue notes
 
 ## 2.1.0 (January 22, 2026)
