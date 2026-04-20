@@ -53,10 +53,13 @@ window.ROSConfig = (function() {
                     console.log('[ROSConfig] Discovered configuration:', cfg);
                     return cfg;
                 })
-                .catch(err => {
+                .catch(async err => {
                     console.error('[ROSConfig] Failed to fetch configuration:', err);
-                    // Return fallback config based on browser location
-                    return this._getFallbackConfig();
+                    // Return fallback config based on browser location and runtime WS probing.
+                    const cfg = await this._discoverWorkingFallbackConfig();
+                    cached_config = cfg;
+                    console.log('[ROSConfig] Using fallback configuration:', cfg);
+                    return cfg;
                 });
             
             return config_loading;
@@ -101,6 +104,72 @@ window.ROSConfig = (function() {
                 timestamp: Math.floor(Date.now() / 1000),
                 _is_fallback: true
             };
+        },
+
+        _getFallbackCandidates: function(baseCfg) {
+            const scheme = baseCfg.rosbridge_scheme;
+            const host = baseCfg.rosbridge_host;
+            return [
+                `${scheme}://${host}:9001`,
+                `${scheme}://${host}:9001/rosbridge_websocket`,
+                `${scheme}://${host}:9090`,
+                `${scheme}://${host}:9090/rosbridge_websocket`
+            ];
+        },
+
+        _probeWebSocketUrl: function(url, timeoutMs = 1500) {
+            return new Promise((resolve) => {
+                let done = false;
+                let ws = null;
+                const finish = (ok) => {
+                    if (done) {
+                        return;
+                    }
+                    done = true;
+                    clearTimeout(timer);
+                    try {
+                        if (ws) {
+                            ws.close();
+                        }
+                    } catch (e) {
+                        // ignore close errors
+                    }
+                    resolve(ok);
+                };
+
+                const timer = setTimeout(() => finish(false), timeoutMs);
+
+                try {
+                    ws = new WebSocket(url);
+                    ws.onopen = () => finish(true);
+                    ws.onerror = () => finish(false);
+                    ws.onclose = () => finish(false);
+                } catch (e) {
+                    finish(false);
+                }
+            });
+        },
+
+        _discoverWorkingFallbackConfig: async function() {
+            const cfg = this._getFallbackConfig();
+            const candidates = this._getFallbackCandidates(cfg);
+
+            for (const url of candidates) {
+                const ok = await this._probeWebSocketUrl(url);
+                if (!ok) {
+                    continue;
+                }
+                const parsed = new URL(url);
+                cfg.rosbridge_url = url;
+                cfg.rosbridge_host = parsed.hostname;
+                cfg.rosbridge_port = Number(parsed.port || (parsed.protocol === 'wss:' ? 443 : 80));
+                cfg._is_fallback = true;
+                cfg._autodetected_ws = true;
+                return cfg;
+            }
+
+            // No candidate proved reachable, keep existing fallback values.
+            return cfg;
         },
         
         /**
