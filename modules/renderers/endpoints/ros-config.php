@@ -18,8 +18,18 @@ header('Access-Control-Allow-Origin: *');
 
 // Get environment variables set by the dashboard container
 $vehicle_name = getenv('VEHICLE_NAME') ?: getenv('HOSTNAME') ?: 'unknown';
-$rosbridge_host = getenv('ROSBRIDGE_HOST') ?: $vehicle_name . '.local';
-$rosbridge_port = getenv('ROSBRIDGE_PORT') ?: 9090;
+
+// Derive the rosbridge host with this precedence:
+//   1. ROSBRIDGE_HOST env var (explicit operator override)
+//   2. The Host: header of the incoming request (strip any :port)
+//      — this is what the browser used to reach us, so it's reachable from the client
+//   3. VEHICLE_NAME.local (legacy last-resort fallback)
+$request_host = null;
+if (!empty($_SERVER['HTTP_HOST'])) {
+    $request_host = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST']);
+}
+$rosbridge_host = getenv('ROSBRIDGE_HOST') ?: ($request_host ?: $vehicle_name . '.local');
+$rosbridge_port = getenv('ROSBRIDGE_PORT') ?: 9001;
 
 // Determine if we're behind HTTPS
 $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || 

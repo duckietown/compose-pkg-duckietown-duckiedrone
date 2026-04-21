@@ -78,28 +78,20 @@ window.ROSConfig = (function() {
          * Derives robot name from browser URL (less reliable but works as backup)
          */
         _getFallbackConfig: function() {
-            // Try to extract hostname from browser location
+            // Use whatever hostname the browser used to reach the dashboard.
+            // This is the most reliable signal: if the browser could load the
+            // page from this host, rosbridge on the same host is the best guess.
             let hostname = window.location.hostname;
-            
-            // Common fallback: if accessed via localhost/127.0.0.1, assume testdrone
-            if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                hostname = 'testdrone.local';
-            }
-            
-            // If no domain, append .local
-            if (!hostname.includes('.')) {
-                hostname = hostname + '.local';
-            }
-            
+
             let is_https = window.location.protocol === 'https:';
             let scheme = is_https ? 'wss' : 'ws';
-            
+
             return {
-                vehicle_name: hostname.split('.')[0],  // Extract before .local
+                vehicle_name: hostname.split('.')[0],
                 robot_hostname: hostname,
-                rosbridge_url: `${scheme}://${hostname}:9090/rosbridge_websocket`,
+                rosbridge_url: `${scheme}://${hostname}:9001/rosbridge_websocket`,
                 rosbridge_host: hostname,
-                rosbridge_port: 9090,
+                rosbridge_port: 9001,
                 rosbridge_scheme: scheme,
                 timestamp: Math.floor(Date.now() / 1000),
                 _is_fallback: true
