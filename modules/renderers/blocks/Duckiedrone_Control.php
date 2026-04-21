@@ -99,6 +99,9 @@ class Duckiedrone_Control extends BlockRenderer {
                 </td>
                 <td rowspan="5" class="col-md-2 text-center" style="padding: 0">
                     <div id="drone_control_commands_joy_stick" style="width:160px;height:160px;margin:0;"></div>
+                    <div id="drone_control_commands_gamepad_status" style="font-size: 11px; margin-top: 6px; color: #8a8a8a;">
+                        Controller: not detected
+                    </div>
                 </td>
             </tr>
             <?php
@@ -152,13 +155,9 @@ class Duckiedrone_Control extends BlockRenderer {
             }
             ?>
         </table>
-        
-        <?php
-        $ros_hostname = $args['ros_hostname'] ?? null;
-        $ros_hostname = ROS::sanitize_hostname($ros_hostname);
-        $connected_evt = ROS::get_event(ROS::$ROSBRIDGE_CONNECTED, $ros_hostname);
-        ?>
 
+        <!-- Include ROS Configuration Discovery -->
+        <script src="<?php echo Core::getJSscriptURL('ros-config.js', 'duckietown_duckiedrone') ?>"></script>
         <!-- Include ROS -->
         <script src="<?php echo Core::getJSscriptURL('rosdb.js', 'ros') ?>"></script>
         <!-- Include Joy library -->
@@ -171,6 +170,8 @@ class Duckiedrone_Control extends BlockRenderer {
             const CONST_MID_VAL = 1500;
             
             const CONST_JOY_YAW_DEADBAND = 20;
+            const CONST_GAMEPAD_AXIS_DEADBAND = 0.12;
+            const CONST_GAMEPAD_TRIGGER_DEADBAND = 0.05;
             const CONST_MAX_ROLL_PITCH = <?php echo $args['max_roll_pitch'] ?? self::$ARGUMENTS['max_roll_pitch']['default'] ?>;
             
             function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color) {
@@ -254,55 +255,79 @@ class Duckiedrone_Control extends BlockRenderer {
                 }
             }
       
-            $(document).on("<?php echo $connected_evt ?>", function (evt) {
-                // TODO: this is the right way to do it
-                let set_override_srv = new ROSLIB.Service({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name : '<?php echo $args['service_override_commands'] ?>',
-                    messageType : 'duckietown_msgs/SetDroneCommandsOverride'
-                });
-                
-                let roll_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>roll_override',
-                });
-                roll_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_roll').bootstrapToggle(status);
-                });
-                
-                let pitch_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>pitch_override',
-                });
-                pitch_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_pitch').bootstrapToggle(status);
-                });
-                
-                let yaw_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>yaw_override',
-                });
-                yaw_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_yaw').bootstrapToggle(status);
-                });
-                
-                let throttle_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>throttle_override',
-                });
-                throttle_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_throttle').bootstrapToggle(status);
-                });
-                
-                let set_mode_srv = new ROSLIB.Service({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name : '<?php echo $args['service_set_mode'] ?>',
-                    messageType : 'duckietown_msgs/SetDroneMode'
-                });
+            // Initialize ROS configuration discovery and set up widget
+            (async function initializeWidget() {
+                try {
+                    // Discover ROS configuration at runtime (works with proxies!)
+                    let config = await ROSConfig.init();
+                    let ros_hostname = config.vehicle_name;
+                    
+                    console.log('[Duckiedrone_Control] Using discovered robot:', ros_hostname);
+                    
+                    // Ensure ROSbridge connection exists for this hostname
+                    if (!window.ros || !window.ros[ros_hostname]) {
+                        console.warn('[Duckiedrone_Control] Waiting for ROSbridge connection...');
+                        // Wait a bit for rosdb.js to establish connection
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    // If still no connection, try to initialize one
+                    if (!window.ros || !window.ros[ros_hostname]) {
+                        console.log('[Duckiedrone_Control] Creating ROS connection to', config.rosbridge_url);
+                        window.ros = window.ros || {};
+                        window.ros[ros_hostname] = new ROSLIB.Ros({
+                            url: config.rosbridge_url
+                        });
+                    }
+                    
+                    // TODO: this is the right way to do it
+                    let set_override_srv = new ROSLIB.Service({
+                        ros: window.ros[ros_hostname],
+                        name : '<?php echo $args['service_override_commands'] ?>',
+                        messageType : 'duckietown_msgs/SetDroneCommandsOverride'
+                    });
+                    
+                    let roll_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>roll_override',
+                    });
+                    roll_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_roll').bootstrapToggle(status);
+                    });
+                    
+                    let pitch_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>pitch_override',
+                    });
+                    pitch_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_pitch').bootstrapToggle(status);
+                    });
+                    
+                    let yaw_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>yaw_override',
+                    });
+                    yaw_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_yaw').bootstrapToggle(status);
+                    });
+                    
+                    let throttle_override = new ROSLIB.Param({
+                        ros: window.ros[ros_hostname],
+                        name: '<?php echo $args['param_override_prefix'] ?>throttle_override',
+                    });
+                    throttle_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_throttle').bootstrapToggle(status);
+                    });
+                    
+                    let set_mode_srv = new ROSLIB.Service({
+                        ros: window.ros[ros_hostname],
+                        name : '<?php echo $args['service_set_mode'] ?>',
+                        messageType : 'duckietown_msgs/SetDroneMode'
+                    });
             
                 let ctx = document.getElementById("drone_control_commands_joy_keys").getContext('2d');
                 
@@ -310,6 +335,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 let pitch_bar = $('#<?php echo $id ?> #drone_control_commands_bar_pitch');
                 let yaw_bar = $('#<?php echo $id ?> #drone_control_commands_bar_yaw');
                 let throttle_bar = $('#<?php echo $id ?> #drone_control_commands_bar_throttle');
+                let gamepad_status = $('#<?php echo $id ?> #drone_control_commands_gamepad_status');
                 
                 let range = (<?php echo $args['max_value'] ?> - <?php echo $args['min_value'] ?>).toFixed(1);
                 
@@ -319,8 +345,106 @@ class Duckiedrone_Control extends BlockRenderer {
                     joy_stick_data.y = data.y;
                 });
                 let joy_keys = new Set([]);
+                let active_gamepad_id = null;
                 
                 let armed = false;
+
+                function clamp(value, min, max) {
+                    return Math.min(Math.max(value, min), max);
+                }
+
+                function apply_deadband(value, deadband) {
+                    return Math.abs(value) < deadband ? 0 : value;
+                }
+
+                function set_controller_status(text, color) {
+                    gamepad_status.text(text);
+                    gamepad_status.css('color', color);
+                }
+
+                function get_gamepads() {
+                    if (!navigator.getGamepads) {
+                        return [];
+                    }
+                    return navigator.getGamepads();
+                }
+
+                function get_gamepad_by_id(target_id) {
+                    if (target_id === null) {
+                        return null;
+                    }
+                    let gamepads = get_gamepads();
+                    for (let gamepad of gamepads) {
+                        if (gamepad && gamepad.id === target_id && gamepad.connected) {
+                            return gamepad;
+                        }
+                    }
+                    return null;
+                }
+
+                function get_active_gamepad() {
+                    let current = get_gamepad_by_id(active_gamepad_id);
+                    if (current) {
+                        return current;
+                    }
+                    let gamepads = get_gamepads();
+                    for (let gamepad of gamepads) {
+                        if (gamepad && gamepad.connected) {
+                            active_gamepad_id = gamepad.id;
+                            return gamepad;
+                        }
+                    }
+                    active_gamepad_id = null;
+                    return null;
+                }
+
+                function read_gamepad_axes() {
+                    let gamepad = get_active_gamepad();
+                    if (!gamepad) {
+                        set_controller_status('Controller: not detected', '#8a8a8a');
+                        return null;
+                    }
+
+                    // Standard Gamepad mapping: left stick controls roll/pitch, right stick X controls yaw,
+                    // and triggers are combined for throttle.
+                    let left_x = apply_deadband(gamepad.axes[0] || 0, CONST_GAMEPAD_AXIS_DEADBAND);
+                    let left_y = apply_deadband(gamepad.axes[1] || 0, CONST_GAMEPAD_AXIS_DEADBAND);
+                    let right_x = apply_deadband(gamepad.axes[2] || 0, CONST_GAMEPAD_AXIS_DEADBAND);
+
+                    let left_trigger = 0;
+                    let right_trigger = 0;
+                    if (gamepad.buttons[6]) {
+                        left_trigger = apply_deadband(gamepad.buttons[6].value || 0, CONST_GAMEPAD_TRIGGER_DEADBAND);
+                    }
+                    if (gamepad.buttons[7]) {
+                        right_trigger = apply_deadband(gamepad.buttons[7].value || 0, CONST_GAMEPAD_TRIGGER_DEADBAND);
+                    }
+
+                    let roll = Math.round(clamp(left_x, -1, 1) * 1000);
+                    let pitch = Math.round(clamp(-left_y, -1, 1) * 1000);
+                    let yaw = Math.round(clamp(right_x, -1, 1) * 1000);
+
+                    // Trigger differential centers throttle around hover-ish midpoint (500),
+                    // then saturates to [0, 1000].
+                    let throttle_delta = clamp(right_trigger - left_trigger, -1, 1);
+                    let throttle = clamp(Math.round(500 + throttle_delta * 500), 0, 1000);
+
+                    set_controller_status('Controller: connected', '#3c763d');
+                    return new JoyAxes(roll, pitch, yaw, throttle);
+                }
+
+                window.addEventListener('gamepadconnected', (_) => {
+                    set_controller_status('Controller: connected', '#3c763d');
+                });
+
+                window.addEventListener('gamepaddisconnected', (_) => {
+                    active_gamepad_id = null;
+                    set_controller_status('Controller: not detected', '#8a8a8a');
+                });
+
+                if (!navigator.getGamepads) {
+                    set_controller_status('Controller: unsupported by browser', '#8a8a8a');
+                }
             
                 $('#<?php echo $id ?> #drone_control_commands_override_roll').change(function() {
                     let checked = $(this).prop('checked');
@@ -344,7 +468,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 
                 // subscribe to control signals
                 (new ROSLIB.Topic({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
+                    ros: window.ros[ros_hostname],
                     name: '<?php echo $args["topic_commands"] ?>',
                     messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1,
@@ -363,7 +487,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 
                 //subscribe to mode
                 (new ROSLIB.Topic({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
+                    ros: window.ros[ros_hostname],
                     name: '<?php echo $args["topic_mode_current"] ?>',
                     messageType: 'mavros_msgs/State',
                     queue_size: 1,
@@ -374,7 +498,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 
                 // joystick commands publisher
                 const joystick_topic = new ROSLIB.Topic({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
+                    ros: window.ros[ros_hostname],
                     name: '<?php echo $args["topic_control"] ?>',
                     messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1
@@ -486,16 +610,24 @@ class Duckiedrone_Control extends BlockRenderer {
                     drawArrow(ctx, ...pos.left, line_width, left ? 'green' : 'gray');
                     drawArrow(ctx, ...pos.right, line_width, right ? 'green' : 'gray');
                     
-                    let joy_axes = map_to_real(front, back, left, right);
+                    let joy_axes = read_gamepad_axes();
+                    if (joy_axes === null) {
+                        joy_axes = map_to_real(front, back, left, right);
+                    }
                     publish_joy_cmd(joy_axes, {});
                 }
                 
                 setInterval(main_loop, 50);
-            });
+                    
+                } catch (err) {
+                    console.error('[Duckiedrone_Control] Failed to initialize widget:', err);
+                }
+            })();
         </script>
         
         <?php
-        ROS::connect($ros_hostname);
+        // Note: ROS::connect() is no longer needed here since widgets use runtime discovery
+        // via ROSConfig.init(). The old event-based pattern is replaced with async/await.
         ?>
 
         <style type="text/css">
