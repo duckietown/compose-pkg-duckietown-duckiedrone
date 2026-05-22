@@ -84,7 +84,7 @@
 			},
             {
                 "shape": {
-                    "rows": 1,
+                    "rows": 2,
                     "cols": 3
                 },
                 "renderer": "Mavros_Arming",
@@ -92,10 +92,10 @@
                 "subtitle": "WARNING: This will activate the propellers",
                 "args": {
                     "ros_hostname": "",
-                    "arming_service": "~/mavros\/cmd\/arming",
-                    "kill_switch": "~/mavros\/cmd\/command",
-					"set_mode_service": "~/mavros\/set_mode",
-					"state_topic": "~/mavros\/state",
+                    "arming_service": "/mavros\/cmd\/arming",
+                    "kill_switch": "/mavros\/cmd\/command",
+					"set_mode_service": "/mavros\/set_mode",
+					"state_topic": "/mavros\/state",
                     "frequency": 10,
                     "background_color": "#fff"
                 }
@@ -139,13 +139,13 @@
                 },
                 "renderer": "Duckiedrone_IMU_Orientation",
                 "title": "IMU - Orientation",
-                "subtitle": "~/mavros/imu/data",
+                "subtitle": "/mavros/imu/data",
                 "args": {
                     "ros_hostname": "",
-                    "topic": "~/mavros/imu/data",
-                    "gyro_service": "~/px4_calibration/calibrate_gyro",
-                    "accel_service": "~/px4_calibration/calibrate_accel",
-                    "status_topic": "~/px4_calibration/status",
+                    "topic": "/mavros/imu/data",
+                    "gyro_service": "/px4_calibration/calibrate_gyro",
+                    "accel_service": "/px4_calibration/calibrate_accel",
+                    "status_topic": "/px4_calibration/status",
                     "fps": 5
                 }
             },

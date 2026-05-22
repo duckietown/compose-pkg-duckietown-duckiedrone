@@ -1,7 +1,17 @@
-## 2.1.1 (May 22, 2026)
+## 2.2.2 (May 22, 2026)
   - Added PX4 gyro and accelerometer calibration controls to the IMU dashboard block
   - Updated the default Duckiedrone mission to use the PX4 IMU calibration services
   - Removed the legacy yaw reset controls from the IMU block
+
+## 2.2.1 (April 20, 2026)
+  - fix(arming): unify button styling and switch to CSS-grid layout (ARM/DISARM | FLIGHT MODE | ACTIONS) so the stacked mode buttons no longer clip
+  - fix(mission): bump Mavros_Arming block to rows:2 to accommodate the vertical LOITER/ALTITUDE/OFFBOARD stack
+
+## 2.2.0 (April 20, 2026)
+  - feat(arming): 3-way flight-mode selector (LOITER / ALTITUDE / OFFBOARD) replaces the OFFBOARD/ALTITUDE checkbox
+  - fix(arming): suppress state-sync change events on page load (prevents spurious set_mode calls that pushed the drone out of LOITER)
+  - fix(mission): use absolute `/mavros/*` paths in the default mission so widgets work under rosbridge's `~` namespace on virtual drones
+  - docs: rewrite README with widget authoring guide, dev workflow, and known-issue notes
 
 ## 2.1.0 (January 22, 2026)
   - Merge pull request #4 from Tuxliri/update-arming-widget-DTSW-7558
