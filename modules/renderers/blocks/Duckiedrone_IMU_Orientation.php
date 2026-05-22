@@ -205,13 +205,13 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                     config.data.datasets[0].data.shift();
                     config.data.datasets[1].data.shift();
                     config.data.datasets[2].data.shift();
-                    q = [
+                    let q = [
                         message.orientation.w,
                         message.orientation.x,
                         message.orientation.y,
                         message.orientation.z,
                     ];
-                    rpy = eulerFromQuaternion(q, "XYZ");
+                    let rpy = eulerFromQuaternion(q, "XYZ");
                     config.data.datasets[0].data.push(rpy[0] * (180/Math.PI));
                     config.data.datasets[1].data.push(rpy[1] * (180/Math.PI));
                     config.data.datasets[2].data.push(rpy[2] * (180/Math.PI));
@@ -254,6 +254,10 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
             }
         </script>
 
+        <?php
+        ROS::connect($ros_hostname);
+        ?>
+
         <style type="text/css">
             #<?php echo $id ?> .duckiedrone-imu-toolbar {
                 position: absolute;
@@ -272,16 +276,17 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                 left: 16px;
                 right: 176px;
                 top: 48px;
-                min-height: 28px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                min-height: 31px;
+                max-height: 58px;
+                overflow: auto;
+                white-space: normal;
                 border: 1px solid #ddd;
                 border-radius: 4px;
                 padding: 4px 8px;
                 background: #fafafa;
                 color: #333;
                 font-size: 8pt;
+                line-height: 1.2;
                 z-index: 2;
             }
             #<?php echo $id ?> .duckiedrone-imu-status-error {
@@ -297,6 +302,7 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
             #<?php echo $id ?> .duckiedrone-imu-chart {
                 width: 100%;
                 height: 95%;
+                min-height: 150px;
                 padding: 44px 16px 6px 16px;
             }
         </style>
