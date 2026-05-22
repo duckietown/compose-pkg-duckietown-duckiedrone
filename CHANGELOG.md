@@ -1,3 +1,8 @@
+## 2.2.2 (May 22, 2026)
+  - Added PX4 gyro and accelerometer calibration controls to the IMU dashboard block
+  - Updated the default Duckiedrone mission to use the PX4 IMU calibration services
+  - Removed the legacy yaw reset controls from the IMU block
+
 ## 2.2.1 (April 20, 2026)
   - fix(arming): unify button styling and switch to CSS-grid layout (ARM/DISARM | FLIGHT MODE | ACTIONS) so the stacked mode buttons no longer clip
   - fix(mission): bump Mavros_Arming block to rows:2 to accommodate the vertical LOITER/ALTITUDE/OFFBOARD stack

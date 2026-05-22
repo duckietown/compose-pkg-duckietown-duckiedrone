@@ -5,7 +5,7 @@
 This package is consumed by the dashboard via [`dependencies-compose.txt`](../../robot/dt-device-dashboard/dependencies-compose.txt):
 
 ```
-duckietown_duckiedrone==v2.1.0
+duckietown_duckiedrone==v2.2.2
 ```
 
 The dashboard runs inside [`\compose\`](https://github.com/afdaniele/compose), a PHP package system. This repo is one of those packages.
@@ -176,7 +176,7 @@ From [`robot/dt-device-dashboard`](../../robot/dt-device-dashboard):
 dts devel build
 ```
 
-This pulls `duckietown_duckiedrone==v2.1.0` (or whichever version is pinned). You need the package installed in the image at least once so that the autoload paths exist.
+This pulls `duckietown_duckiedrone==v2.2.2` (or whichever version is pinned). You need the package installed in the image at least once so that the autoload paths exist.
 
 ### 2. Run the sandbox with this package mounted
 
@@ -208,8 +208,8 @@ Update `CHANGELOG.md` with a new entry, then bump the pin in [`robot/dt-device-d
 
 ### 5. Deploy
 
-1. Tag and push this package: the `ente` branch tag (e.g. `v2.1.1`) is what `dependencies-compose.txt` references.
-2. In `dt-device-dashboard`, bump `duckietown_duckiedrone==v2.1.1` in `dependencies-compose.txt`, commit, push.
+1. Tag and push this package: the `ente` branch tag (e.g. `v2.2.2`) is what `dependencies-compose.txt` references.
+2. In `dt-device-dashboard`, bump `duckietown_duckiedrone==v2.2.2` in `dependencies-compose.txt`, commit, push.
 3. Rebuild and publish the dashboard image; it is then picked up the next time `dts duckiebot update ROBOT_NAME` runs on a robot.
 
 ---

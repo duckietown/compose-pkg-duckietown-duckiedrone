@@ -137,14 +137,15 @@
                     "rows": 2,
                     "cols": 8
                 },
-                "renderer": "SensorMsgs_IMU_Orientation",
+                "renderer": "Duckiedrone_IMU_Orientation",
                 "title": "IMU - Orientation",
-                "subtitle": "~/mavros/imu/data",
+                "subtitle": "/mavros/imu/data",
                 "args": {
                     "ros_hostname": "",
-                    "topic": "~/mavros/imu/data",
-                    "service_1": "~/flight_controller_node/calibrate_imu",
-                    "service_2": "~/flight_controller_node/zero_yaw",
+                    "topic": "/mavros/imu/data",
+                    "gyro_service": "/px4_calibration/calibrate_gyro",
+                    "accel_service": "/px4_calibration/calibrate_accel",
+                    "status_topic": "/px4_calibration/status",
                     "fps": 5
                 }
             },
