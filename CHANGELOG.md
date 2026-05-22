@@ -1,3 +1,8 @@
+## 2.1.1 (May 22, 2026)
+  - Added PX4 gyro and accelerometer calibration controls to the IMU dashboard block
+  - Updated the default Duckiedrone mission to use the PX4 IMU calibration services
+  - Removed the legacy yaw reset controls from the IMU block
+
 ## 2.1.0 (January 22, 2026)
   - Merge pull request #4 from Tuxliri/update-arming-widget-DTSW-7558
   - feat(arming): complete widget refactor with improved UX
