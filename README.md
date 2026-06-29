@@ -65,10 +65,12 @@ The `$id` is unique per widget instance; use it to namespace DOM ids and JS vari
 | File | Class | Purpose |
 |---|---|---|
 | `Duckiedrone_Arming.php` | `Mavros_Arming` | ARM/DISARM toggle + flight-mode toggle (OFFBOARD/ALTITUDE) + kill switch + takeoff button. Talks to mavros services. |
-| `Duckiedrone_Control.php` | `Duckiedrone_Control` | Virtual joystick publishing to `~/mavros/manual_control/send`. |
+| `Duckiedrone_Control.php` | `Duckiedrone_Control` | Virtual joystick publishing to `/mavros/manual_control/send`, reading `/mavros/state`, with optional legacy override params for older fly-commands mux setups. |
 | `Duckiedrone_Heartbeat.php` | `Duckiedrone_Heartbeat` | Single-topic heartbeat indicator. |
 | `Duckiedrone_Heartbeats_Monitor.php` | `Duckiedrone_Heartbeats_Monitor` | Multi-topic heartbeat grid for joystick / altitude / state_estimator / pid. |
-| `DuckietownMsgs_DroneMotorCommand.php` | `DuckietownMsgs_DroneMotorCommand` | Bar chart of the four motor PWM values. |
+| `DuckietownMsgs_DroneMotorCommand.php` | `DuckietownMsgs_DroneMotorCommand` | Bar chart of the four motor PWM values for legacy `flight_controller_node` deployments. |
+
+The current shell-managed Duckiedrone stacks use MAVROS and PX4 calibration endpoints by default. The shipped mission therefore targets `/mavros/*` and `/px4_calibration/*`; legacy `/flight_controller_node/*` and `/fly_commands_mux_node/*` hooks remain available only for manual compatibility with older deployments.
 
 ### Anatomy of a widget (writing a new one)
 
@@ -161,6 +163,8 @@ Edit `data/private/default_missions/duckietown_duckiedrone_missions/default.json
 The `renderer` field must match the PHP class name (not the filename).
 
 > **Known issue — `~/` path resolution.** The default mission currently ships with `~/mavros/...` paths for topics and services. On a virtual drone, rosbridge resolves `~` to `/<robot>/rosbridge_websocket`, not to `/`, so these services don't exist at that path and the corresponding widgets fail silently. Prefer absolute paths (`/mavros/cmd/arming`, `/mavros/state`, etc.) in new mission entries until the upstream `ROS::sanitize_hostname` behavior is fixed. See `docs/dashboard-test-report/README.md`.
+
+The default Duckiedrone mission in this repo already follows that rule for the live MAVROS and PX4 calibration endpoints.
 
 ---
 
