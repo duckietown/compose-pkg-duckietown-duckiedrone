@@ -119,7 +119,7 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                     <?php
                     for ($i = 1; $i <= 4; $i++) {
                         if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                            continue
+                            continue;
                         ?>
                         <td class="col-md-3 heartbeats-monitor-heart<?php echo $i ?>">
                             <span id="heartbeats-monitor-heart<?php echo $i ?>" class="glyphicon glyphicon-heart" aria-hidden="true"></span>
@@ -131,7 +131,7 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                 <tr style="font-family: monospace; font-size: 8pt"><?php
                     for ($i = 1; $i <= 4; $i++) {
                         if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                            continue
+                            continue;
                         ?>
                         <td class="col-md-3 heartbeats-monitor-heart<?php echo $i ?>">
                             <?php echo $args["label{$i}"] ?>
@@ -160,7 +160,7 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                 <?php
                 for ($i = 1; $i <= 4; $i++) {
                     if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                        continue
+                        continue;
                     $override_name = trim($args["override{$i}"] ?? '');
                     ?>
                     _heartbeats['<?php echo "heart{$i}" ?>'] = 0.0;
