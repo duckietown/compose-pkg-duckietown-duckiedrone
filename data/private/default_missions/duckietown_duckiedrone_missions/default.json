@@ -18,22 +18,6 @@
             },
             {
                 "shape": {
-                    "rows": 2,
-                    "cols": 5
-                },
-                "renderer": "DuckietownMsgs_DroneMotorCommand",
-                "title": "Motors PWM",
-                "subtitle": "/flight_controller_node/motors",
-                "args": {
-                    "ros_hostname": "",
-                    "topic": "~/flight_controller_node/motors",
-                    "fps": 5,
-                    "min_value": 1000,
-                    "max_value": 2000
-                }
-            },
-            {
-                "shape": {
                     "rows": 1,
                     "cols": 3
                 },
@@ -44,16 +28,12 @@
                     "ros_hostname": "",
                     "topic1": "~/joystick/heartbeat",
                     "label1": "JOYSTICK",
-                    "override1": "~/flight_controller_node/heartbeats/joystick",
                     "topic2": "~/altitude_node/heartbeat",
                     "label2": "ALTITUDE",
-					"override2": "~/flight_controller_node/heartbeats/altitude",
                     "topic3": "~/state_estimator_node/heartbeat",
                     "label3": "STATE",
-					"override3": "~/flight_controller_node/heartbeats/state_estimator",
                     "topic4": "~/pid_controller_node/heartbeat",
                     "label4": "PID",
-					"override4": "~/flight_controller_node/heartbeats/pid",
                     "threshold": 2,
                     "frequency": 2,
                     "background_color": "#fff"
@@ -69,12 +49,13 @@
 				"subtitle": "Control the drone using a virtual joystick",
 				"args": {
 					"ros_hostname": "",
-					"service_set_mode": "~/flight_controller_node\/set_mode",
+                    "service_set_mode": "",
+                    "arming_service": "/mavros\/cmd\/arming",
 					"service_override_commands": "",
-					"param_override_prefix": "~/fly_commands_mux_node\/",
-					"topic_mode_current": "~/flight_controller_node\/mode\/current",
-					"topic_control": "~/mavros/manual_control/send",
-					"topic_commands": "~/flight_controller_node\/commands\/executed",
+                    "param_override_prefix": "",
+                    "topic_mode_current": "/mavros\/state",
+                    "topic_control": "/mavros\/manual_control\/send",
+                    "topic_commands": "/mavros\/manual_control\/send",
 					"frequency": 30,
 					"max_roll_pitch": 300,
 					"min_value": 1000,

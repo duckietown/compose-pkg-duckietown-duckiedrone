@@ -119,7 +119,7 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                     <?php
                     for ($i = 1; $i <= 4; $i++) {
                         if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                            continue
+                            continue;
                         ?>
                         <td class="col-md-3 heartbeats-monitor-heart<?php echo $i ?>">
                             <span id="heartbeats-monitor-heart<?php echo $i ?>" class="glyphicon glyphicon-heart" aria-hidden="true"></span>
@@ -131,7 +131,7 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                 <tr style="font-family: monospace; font-size: 8pt"><?php
                     for ($i = 1; $i <= 4; $i++) {
                         if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                            continue
+                            continue;
                         ?>
                         <td class="col-md-3 heartbeats-monitor-heart<?php echo $i ?>">
                             <?php echo $args["label{$i}"] ?>
@@ -160,7 +160,8 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                 <?php
                 for ($i = 1; $i <= 4; $i++) {
                     if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                        continue
+                        continue;
+                    $override_name = trim($args["override{$i}"] ?? '');
                     ?>
                     _heartbeats['<?php echo "heart{$i}" ?>'] = 0.0;
                     (new ROSLIB.Topic({
@@ -173,19 +174,20 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                         _heartbeats['<?php echo "heart{$i}" ?>'] = seconds_since_epoch();
                         _heartbeat_turn_to_color("<?php echo "heart{$i}" ?>", "green");
                     });
-                    
+                    <?php if (strlen($override_name) > 0) { ?>
                     let <?php echo "heart{$i}" ?> = new ROSLIB.Param({
                         ros: window.ros['<?php echo $ros_hostname ?>'],
-                        name: '<?php echo $args["override{$i}"] ?>',
+                        name: '<?php echo $override_name ?>',
                     });
                     <?php echo "heart{$i}" ?>.get((v) => {
                         _heartbeats_override['<?php echo "heart{$i}" ?>'] = v;
                     });
-                    
+
                     $("#<?php echo $id ?> #heartbeats-monitor-<?php echo "heart{$i}" ?>").on("click", () => {
                         _heartbeats_override['<?php echo "heart{$i}" ?>'] = !(_heartbeats_override['<?php echo "heart{$i}" ?>'] ?? true);
                         <?php echo "heart{$i}" ?>.set(_heartbeats_override['<?php echo "heart{$i}" ?>']);
                     });
+                    <?php } ?>
                     <?php
                 }
                 ?>

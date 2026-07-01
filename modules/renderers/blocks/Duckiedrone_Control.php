@@ -22,32 +22,44 @@ class Duckiedrone_Control extends BlockRenderer {
         "service_set_mode" => [
             "name" => "ROS Service (Set mode)",
             "type" => "text",
-            "mandatory" => True
+            "mandatory" => False,
+            "default" => ""
+        ],
+        "arming_service" => [
+            "name" => "ROS Service (ARM/DISARM)",
+            "type" => "text",
+            "mandatory" => False,
+            "default" => "/mavros/cmd/arming"
         ],
         "service_override_commands" => [
             "name" => "ROS Service (Set commands override)",
             "type" => "text",
-            "mandatory" => True
+            "mandatory" => False,
+            "default" => ""
         ],
         "param_override_prefix" => [
             "name" => "ROS Param Prefix (Command override)",
             "type" => "text",
-            "mandatory" => True
+            "mandatory" => False,
+            "default" => ""
         ],
         "topic_mode_current" => [
             "name" => "ROS Topic (Read mode)",
             "type" => "text",
-            "mandatory" => True
+            "mandatory" => True,
+            "default" => "/mavros/state"
         ],
         "topic_control" => [
             "name" => "ROS Topic (Joystick control)",
             "type" => "text",
-            "mandatory" => True
+            "mandatory" => True,
+            "default" => "/mavros/manual_control/send"
         ],
         "topic_commands" => [
             "name" => "ROS Topic (Read commands)",
             "type" => "text",
-            "mandatory" => True
+            "mandatory" => True,
+            "default" => "/mavros/manual_control/send"
         ],
         "frequency" => [
             "name" => "Frequency (Hz)",
@@ -82,6 +94,20 @@ class Duckiedrone_Control extends BlockRenderer {
     ];
     
     protected static function render($id, &$args) {
+        $ros_hostname = $args['ros_hostname'] ?? null;
+        $ros_hostname = ROS::sanitize_hostname($ros_hostname);
+        $connected_evt = ROS::get_event(ROS::$ROSBRIDGE_CONNECTED, $ros_hostname);
+        $override_param_prefix = trim($args['param_override_prefix'] ?? '');
+        $has_override_params = strlen($override_param_prefix) > 0;
+        $override_disabled_attr = $has_override_params ? '' : 'disabled';
+        $mode_topic = $args['topic_mode_current'] ?? self::$ARGUMENTS['topic_mode_current']['default'];
+        $control_topic = $args['topic_control'] ?? self::$ARGUMENTS['topic_control']['default'];
+        $commands_topic = $args['topic_commands'] ?? $control_topic;
+        if (strlen($commands_topic) <= 0) {
+            $commands_topic = $control_topic;
+        }
+        $arming_service = $args['arming_service'] ?? self::$ARGUMENTS['arming_service']['default'];
+        $legacy_set_mode_service = trim($args['service_set_mode'] ?? '');
         ?>
         <table class="resizable" style="height: 100%">
             <tr style="height: 20px; font-weight: bold">
@@ -134,6 +160,7 @@ class Duckiedrone_Control extends BlockRenderer {
                                data-offstyle="warning"
                                data-class="fast"
                                data-size="mini"
+                               <?php echo $override_disabled_attr ?>
                                name="drone_control_commands_override_<?php echo $bar["id"] ?>"
                                id="drone_control_commands_override_<?php echo $bar["id"] ?>">
                     </td>
@@ -153,12 +180,6 @@ class Duckiedrone_Control extends BlockRenderer {
             ?>
         </table>
         
-        <?php
-        $ros_hostname = $args['ros_hostname'] ?? null;
-        $ros_hostname = ROS::sanitize_hostname($ros_hostname);
-        $connected_evt = ROS::get_event(ROS::$ROSBRIDGE_CONNECTED, $ros_hostname);
-        ?>
-
         <!-- Include ROS -->
         <script src="<?php echo Core::getJSscriptURL('rosdb.js', 'ros') ?>"></script>
         <!-- Include Joy library -->
@@ -255,54 +276,71 @@ class Duckiedrone_Control extends BlockRenderer {
             }
       
             $(document).on("<?php echo $connected_evt ?>", function (evt) {
-                // TODO: this is the right way to do it
-                let set_override_srv = new ROSLIB.Service({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name : '<?php echo $args['service_override_commands'] ?>',
-                    messageType : 'duckietown_msgs/SetDroneCommandsOverride'
-                });
-                
-                let roll_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>roll_override',
-                });
-                roll_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_roll').bootstrapToggle(status);
-                });
-                
-                let pitch_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>pitch_override',
-                });
-                pitch_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_pitch').bootstrapToggle(status);
-                });
-                
-                let yaw_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>yaw_override',
-                });
-                yaw_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_yaw').bootstrapToggle(status);
-                });
-                
-                let throttle_override = new ROSLIB.Param({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['param_override_prefix'] ?>throttle_override',
-                });
-                throttle_override.get((v) => {
-                    let status = (v)? 'on' : 'off';
-                    $('#<?php echo $id ?> #drone_control_commands_override_throttle').bootstrapToggle(status);
-                });
-                
-                let set_mode_srv = new ROSLIB.Service({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name : '<?php echo $args['service_set_mode'] ?>',
-                    messageType : 'duckietown_msgs/SetDroneMode'
-                });
+                const hasOverrideParams = <?php echo $has_override_params ? 'true' : 'false' ?>;
+                let roll_override = null;
+                let pitch_override = null;
+                let yaw_override = null;
+                let throttle_override = null;
+
+                if (hasOverrideParams) {
+                    roll_override = new ROSLIB.Param({
+                        ros: window.ros['<?php echo $ros_hostname ?>'],
+                        name: '<?php echo $override_param_prefix ?>roll_override',
+                    });
+                    roll_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_roll').bootstrapToggle(status);
+                    });
+
+                    pitch_override = new ROSLIB.Param({
+                        ros: window.ros['<?php echo $ros_hostname ?>'],
+                        name: '<?php echo $override_param_prefix ?>pitch_override',
+                    });
+                    pitch_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_pitch').bootstrapToggle(status);
+                    });
+
+                    yaw_override = new ROSLIB.Param({
+                        ros: window.ros['<?php echo $ros_hostname ?>'],
+                        name: '<?php echo $override_param_prefix ?>yaw_override',
+                    });
+                    yaw_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_yaw').bootstrapToggle(status);
+                    });
+
+                    throttle_override = new ROSLIB.Param({
+                        ros: window.ros['<?php echo $ros_hostname ?>'],
+                        name: '<?php echo $override_param_prefix ?>throttle_override',
+                    });
+                    throttle_override.get((v) => {
+                        let status = (v)? 'on' : 'off';
+                        $('#<?php echo $id ?> #drone_control_commands_override_throttle').bootstrapToggle(status);
+                    });
+                } else {
+                    let override_inputs = $('#<?php echo $id ?> input[id^="drone_control_commands_override_"]');
+                    override_inputs.bootstrapToggle('off');
+                    override_inputs.bootstrapToggle('disable');
+                }
+
+                let arming_srv = null;
+                if ('<?php echo $arming_service ?>'.length > 0) {
+                    arming_srv = new ROSLIB.Service({
+                        ros: window.ros['<?php echo $ros_hostname ?>'],
+                        name : '<?php echo $arming_service ?>',
+                        serviceType : 'mavros_msgs/CommandBool'
+                    });
+                }
+
+                let legacy_set_mode_srv = null;
+                if ('<?php echo $legacy_set_mode_service ?>'.length > 0) {
+                    legacy_set_mode_srv = new ROSLIB.Service({
+                        ros: window.ros['<?php echo $ros_hostname ?>'],
+                        name : '<?php echo $legacy_set_mode_service ?>',
+                        serviceType : 'duckietown_msgs/SetDroneMode'
+                    });
+                }
             
                 let ctx = document.getElementById("drone_control_commands_joy_keys").getContext('2d');
                 
@@ -322,30 +360,32 @@ class Duckiedrone_Control extends BlockRenderer {
                 
                 let armed = false;
             
-                $('#<?php echo $id ?> #drone_control_commands_override_roll').change(function() {
-                    let checked = $(this).prop('checked');
-                    roll_override.set(checked);
-                });
-            
-                $('#<?php echo $id ?> #drone_control_commands_override_pitch').change(function() {
-                    let checked = $(this).prop('checked');
-                    pitch_override.set(checked);
-                });
-            
-                $('#<?php echo $id ?> #drone_control_commands_override_yaw').change(function() {
-                    let checked = $(this).prop('checked');
-                    yaw_override.set(checked);
-                });
-            
-                $('#<?php echo $id ?> #drone_control_commands_override_throttle').change(function() {
-                    let checked = $(this).prop('checked');
-                    throttle_override.set(checked);
-                });
+                if (hasOverrideParams) {
+                    $('#<?php echo $id ?> #drone_control_commands_override_roll').change(function() {
+                        let checked = $(this).prop('checked');
+                        roll_override.set(checked);
+                    });
+
+                    $('#<?php echo $id ?> #drone_control_commands_override_pitch').change(function() {
+                        let checked = $(this).prop('checked');
+                        pitch_override.set(checked);
+                    });
+
+                    $('#<?php echo $id ?> #drone_control_commands_override_yaw').change(function() {
+                        let checked = $(this).prop('checked');
+                        yaw_override.set(checked);
+                    });
+
+                    $('#<?php echo $id ?> #drone_control_commands_override_throttle').change(function() {
+                        let checked = $(this).prop('checked');
+                        throttle_override.set(checked);
+                    });
+                }
                 
                 // subscribe to control signals
                 (new ROSLIB.Topic({
                     ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args["topic_commands"] ?>',
+                    name: '<?php echo $commands_topic ?>',
                     messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1,
                     throttle_rate: <?php echo 1000 / $args['frequency'] ?>
@@ -364,7 +404,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 //subscribe to mode
                 (new ROSLIB.Topic({
                     ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args["topic_mode_current"] ?>',
+                    name: '<?php echo $mode_topic ?>',
                     messageType: 'mavros_msgs/State',
                     queue_size: 1,
                     throttle_rate: <?php echo 1000 / $args['frequency'] ?>
@@ -375,7 +415,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 // joystick commands publisher
                 const joystick_topic = new ROSLIB.Topic({
                     ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args["topic_control"] ?>',
+                    name: '<?php echo $control_topic ?>',
                     messageType: 'mavros_msgs/ManualControl',
                     queue_size: 1
                 });
@@ -395,10 +435,17 @@ class Duckiedrone_Control extends BlockRenderer {
                 }
                 
                 function disarm_drone() {
-                    // disarm drone
-                    let request = new ROSLIB.ServiceRequest({mode: {mode: 0}});
-                    // send request
-                    set_mode_srv.callService(request, (_) => {});
+                    if (arming_srv !== null) {
+                        let request = new ROSLIB.ServiceRequest({value: false});
+                        arming_srv.callService(request, (_) => {});
+                        return;
+                    }
+                    if (legacy_set_mode_srv !== null) {
+                        let request = new ROSLIB.ServiceRequest({mode: {mode: 0}});
+                        legacy_set_mode_srv.callService(request, (_) => {});
+                        return;
+                    }
+                    console.warn('No disarm service configured for Duckiedrone_Control.');
                 }
                 
                 function map_to_real(k_front, k_back, k_left, k_right) {
