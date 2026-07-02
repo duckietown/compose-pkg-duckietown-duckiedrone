@@ -1,3 +1,8 @@
+## 2.2.3 (July 02, 2026)
+  - Merge pull request #10 from duckietown/DTSW-7986-Update-Dashboard
+  - fix(dashboard): add missing semicolons in heartbeats monitor logic
+  - fix(dashboard): update Duckiedrone control and heartbeat monitor for MAVROS integration
+
 ## 2.2.2 (May 22, 2026)
   - Added PX4 gyro and accelerometer calibration controls to the IMU dashboard block
   - Updated the default Duckiedrone mission to use the PX4 IMU calibration services
