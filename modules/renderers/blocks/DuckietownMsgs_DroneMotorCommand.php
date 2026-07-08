@@ -23,6 +23,18 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
             "type" => "text",
             "mandatory" => True
         ],
+        "message_type" => [
+            "name" => "ROS Message Type",
+            "type" => "text",
+            "mandatory" => False,
+            "default" => ""
+        ],
+        "fallback_topic" => [
+            "name" => "Fallback ROS Topic",
+            "type" => "text",
+            "mandatory" => False,
+            "default" => "/mavros/rc/out"
+        ],
         "fps" => [
             "name" => "Update frequency (Hz)",
             "type" => "numeric",
@@ -54,14 +66,14 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
 
         <script type="text/javascript">
             $(document).on("<?php echo $connected_evt ?>", function (evt) {
-                // Subscribe to the given topic
-                let subscriber = new ROSLIB.Topic({
-                    ros: window.ros['<?php echo $ros_hostname ?>'],
-                    name: '<?php echo $args['topic'] ?>',
-                    messageType: 'duckietown_msgs/DroneMotorCommand',
-                    queue_size: 1,
-                    throttle_rate: <?php echo 1000 / $args['fps'] ?>
-                });
+                const legacyMessageType = 'duckietown_msgs/DroneMotorCommand';
+                const mavrosMessageType = 'mavros_msgs/RCOut';
+                const topicName = '<?php echo $args['topic'] ?>'.trim();
+                const explicitMessageType = '<?php echo $args['message_type'] ?? '' ?>'.trim();
+                const fallbackTopicName = '<?php echo $args['fallback_topic'] ?? '/mavros/rc/out' ?>'.trim();
+                const resolvedMessageType = explicitMessageType.length > 0
+                    ? explicitMessageType
+                    : (topicName === '/mavros/rc/out' ? mavrosMessageType : legacyMessageType);
 
                 let time_horizon_secs = 20;
                 let color = Chart.helpers.color;
@@ -124,35 +136,87 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
                 let chart = new Chart(ctx, chart_config);
                 window.mission_control_page_blocks_data['<?php echo $id ?>'] = {
                     chart: chart,
-                    config: chart_config
+                    config: chart_config,
+                    activeSource: null
                 };
 
-                subscriber.subscribe(function (message) {
+                function updateChart(values, sourceId) {
                     // get chart
                     let chart_desc = window.mission_control_page_blocks_data['<?php echo $id ?>'];
+                    if (chart_desc.activeSource !== null && chart_desc.activeSource !== sourceId) {
+                        return;
+                    }
+                    chart_desc.activeSource = sourceId;
                     let chart = chart_desc.chart;
                     let config = chart_desc.config;
+                    let yAxisTicks = config.options.scales.yAxes[0].ticks;
+                    let observedMin = Math.min(values[0], values[1], values[2], values[3]);
+                    let observedMax = Math.max(values[0], values[1], values[2], values[3]);
+                    if (observedMin < yAxisTicks.suggestedMin) {
+                        yAxisTicks.suggestedMin = observedMin;
+                    }
+                    if (observedMax > yAxisTicks.suggestedMax) {
+                        yAxisTicks.suggestedMax = observedMax;
+                    }
                     // cut the time horizon to `time_horizon_secs` points
                     config.data.datasets[0].data.shift();
                     config.data.datasets[1].data.shift();
                     config.data.datasets[2].data.shift();
                     config.data.datasets[3].data.shift();
                     // add new Y
-                    config.data.datasets[0].data.push(
-                        message.m1
-                    );
-                    config.data.datasets[1].data.push(
-                        message.m2
-                    );
-                    config.data.datasets[2].data.push(
-                        message.m3
-                    );
-                    config.data.datasets[3].data.push(
-                        message.m4
-                    );
+                    config.data.datasets[0].data.push(values[0]);
+                    config.data.datasets[1].data.push(values[1]);
+                    config.data.datasets[2].data.push(values[2]);
+                    config.data.datasets[3].data.push(values[3]);
                     // refresh chart
                     chart.update();
-                });
+                }
+
+                function subscribeToTopic(topic, messageType, sourceId) {
+                    if (topic.length <= 0 || messageType.length <= 0) {
+                        return;
+                    }
+
+                    let subscriber = new ROSLIB.Topic({
+                        ros: window.ros['<?php echo $ros_hostname ?>'],
+                        name: topic,
+                        messageType: messageType,
+                        queue_size: 1,
+                        throttle_rate: <?php echo 1000 / $args['fps'] ?>
+                    });
+
+                    subscriber.subscribe(function (message) {
+                        if (messageType === mavrosMessageType) {
+                            if (!message.channels || message.channels.length < 4) {
+                                return;
+                            }
+                            updateChart([
+                                message.channels[0],
+                                message.channels[1],
+                                message.channels[2],
+                                message.channels[3]
+                            ], sourceId);
+                            return;
+                        }
+
+                        updateChart([
+                            message.m1,
+                            message.m2,
+                            message.m3,
+                            message.m4
+                        ], sourceId);
+                    });
+                }
+
+                subscribeToTopic(topicName, resolvedMessageType, 'primary');
+
+                if (
+                    resolvedMessageType === legacyMessageType &&
+                    fallbackTopicName.length > 0 &&
+                    fallbackTopicName !== topicName
+                ) {
+                    subscribeToTopic(fallbackTopicName, mavrosMessageType, 'fallback');
+                }
             });
         </script>
         <?php
