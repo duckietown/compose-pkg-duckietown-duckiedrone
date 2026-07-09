@@ -125,6 +125,8 @@ class Mavros_Arming extends BlockRenderer {
             <div class="col">
                 <div class="col-label">FLIGHT MODE</div>
                 <div class="btn-group-vertical btn-group-xs" role="group" id="drone_mode_selector">
+                    <button type="button" class="btn btn-default" data-mode="STABILIZED"
+                            title="PX4 STABILIZED — manual attitude control that self-levels; needs no GPS or altitude estimate. Use this for manual flight.">STABILIZED</button>
                     <button type="button" class="btn btn-default" data-mode="AUTO.LOITER"
                             title="PX4 AUTO.LOITER — position/altitude hold, safe armable default">LOITER</button>
                     <button type="button" class="btn btn-default" data-mode="ALTCTL"
@@ -169,12 +171,13 @@ class Mavros_Arming extends BlockRenderer {
         <script src="<?php echo Core::getJSscriptURL('rosdb.js', 'ros') ?>"></script>
 
         <script type="text/javascript">
+            let _MODE_STABILIZED = 'STABILIZED';
             let _MODE_LOITER = 'AUTO.LOITER';
             let _MODE_ALTITUDE = 'ALTCTL';
             let _MODE_OFFBOARD = 'OFFBOARD';
             let _MODE_AUTO_TAKEOFF = 'AUTO.TAKEOFF';
             let _MODE_AUTO_LAND = 'AUTO.LAND';
-            let _SELECTABLE_MODES = [_MODE_LOITER, _MODE_ALTITUDE, _MODE_OFFBOARD];
+            let _SELECTABLE_MODES = [_MODE_STABILIZED, _MODE_LOITER, _MODE_ALTITUDE, _MODE_OFFBOARD];
 
             // Track states
             let isArmed = false;
