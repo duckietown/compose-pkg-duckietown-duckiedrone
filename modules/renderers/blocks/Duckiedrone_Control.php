@@ -454,8 +454,8 @@ class Duckiedrone_Control extends BlockRenderer {
                 }
                 
                 function map_to_real(k_front, k_back, k_left, k_right) {
-                    let x = parseInt(joy_stick_data.x);
-                    let y = parseInt(joy_stick_data.y);
+                    let x = Number(joy_stick_data.x);
+                    let y = Number(joy_stick_data.y);
                     // throttle: map joystick Y (-100 to 100) to [0, 1000]
                     // y=-100 -> 0, y=0 -> 500, y=100 -> 1000
                     let throttle = Math.round((y + 100) * 5);
@@ -533,6 +533,7 @@ class Duckiedrone_Control extends BlockRenderer {
                         pos[k][3] += offsetY;
                     }
                     
+                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                     drawArrow(ctx, ...pos.up, line_width, front ? 'green' : 'gray');
                     drawArrow(ctx, ...pos.down, line_width, back ? 'green' : 'gray');
                     drawArrow(ctx, ...pos.left, line_width, left ? 'green' : 'gray');
