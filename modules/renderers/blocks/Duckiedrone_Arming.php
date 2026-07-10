@@ -562,8 +562,9 @@ class Mavros_Arming extends BlockRenderer {
                         if (message.mode !== currentMode) {
                             currentMode = message.mode;
                             // Only highlight the button if the reported mode is one of the
-                            // three selectable modes; otherwise clear selection (e.g. AUTO.TAKEOFF,
-                            // AUTO.LAND, MANUAL, etc. are transient and not user-selectable here).
+                            // selectable modes (_SELECTABLE_MODES); otherwise clear selection
+                            // (e.g. AUTO.TAKEOFF, AUTO.LAND, MANUAL, etc. are transient and not
+                            // user-selectable here).
                             let shown = _SELECTABLE_MODES.indexOf(message.mode) >= 0 ? message.mode : null;
                             highlight_mode_button(shown);
                         }

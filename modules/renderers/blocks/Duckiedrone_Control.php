@@ -282,6 +282,12 @@ class Duckiedrone_Control extends BlockRenderer {
                     this.container.addEventListener('pointerup', release);
                     this.container.addEventListener('pointercancel', release);
 
+                    if (typeof ResizeObserver !== 'undefined') {
+                        new ResizeObserver(function () { self._render(); }).observe(this.container);
+                    } else {
+                        window.addEventListener('resize', function () { self._render(); });
+                    }
+
                     this._render();
                 }
 
@@ -329,7 +335,7 @@ class Duckiedrone_Control extends BlockRenderer {
                     return {
                         x: this.pitch,     // int16 [-1000, 1000], forward +
                         y: this.roll,      // int16 [-1000, 1000], right +
-                        z: this.throttle,  // int16 [-1000, 1000]
+                        z: this.throttle,  // int16 [0, 1000]
                         r: this.yaw,       // int16 [-1000, 1000], clockwise +
                         buttons: 0         // uint16
                     };
