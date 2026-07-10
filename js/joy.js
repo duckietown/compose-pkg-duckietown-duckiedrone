@@ -67,7 +67,11 @@ let StickStatus =
  *  internalStrokeColor {String}(optional) - Border color of Stick (Default value is '#003300')
  *  externalLineWidth {Int} (optional) - External reference circonference width (Default value is 2)
  *  externalStrokeColor {String} (optional) - External reference circonference color (Default value is '#008000')
- *  autoReturnToCenter {Bool} (optional) - Sets the behavior of the stick, whether or not, it should return to zero position when released (Default value is True and return to zero)
+ *  autoReturnToCenter {Bool} (optional) - Sets the behavior of both axes, whether or not, they should return to zero position when released (Default value is True and return to zero)
+ *  autoReturnToCenterX {Bool} (optional) - Sets whether X should return to center when released (Default value is autoReturnToCenter)
+ *  autoReturnToCenterY {Bool} (optional) - Sets whether Y should return to center when released (Default value is autoReturnToCenter)
+ *  initialX {Int} (optional) - Initial normalized X position from -100 to 100 (Default value is 0)
+ *  initialY {Int} (optional) - Initial normalized Y position from -100 to 100 (Default value is 0)
  * @param callback {StickStatus} -
  */
 var JoyStick = (function(container, parameters, callback)
@@ -81,7 +85,11 @@ var JoyStick = (function(container, parameters, callback)
         internalStrokeColor = (typeof parameters.internalStrokeColor === "undefined" ? "#003300" : parameters.internalStrokeColor),
         externalLineWidth = (typeof parameters.externalLineWidth === "undefined" ? 2 : parameters.externalLineWidth),
         externalStrokeColor = (typeof parameters.externalStrokeColor ===  "undefined" ? "#008000" : parameters.externalStrokeColor),
-        autoReturnToCenter = (typeof parameters.autoReturnToCenter === "undefined" ? true : parameters.autoReturnToCenter);
+        autoReturnToCenter = (typeof parameters.autoReturnToCenter === "undefined" ? true : parameters.autoReturnToCenter),
+        autoReturnToCenterX = (typeof parameters.autoReturnToCenterX === "undefined" ? autoReturnToCenter : parameters.autoReturnToCenterX),
+        autoReturnToCenterY = (typeof parameters.autoReturnToCenterY === "undefined" ? autoReturnToCenter : parameters.autoReturnToCenterY),
+        initialX = (typeof parameters.initialX === "undefined" ? 0 : parameters.initialX),
+        initialY = (typeof parameters.initialY === "undefined" ? 0 : parameters.initialY);
 
     callback = callback || function(StickStatus) {};
 
@@ -112,8 +120,8 @@ var JoyStick = (function(container, parameters, callback)
     var directionVerticalLimitPos = canvas.height / 10;
     var directionVerticalLimitNeg = directionVerticalLimitPos * -1;
     // Used to save current position of stick
-    var movedX=centerX;
-    var movedY=centerY;
+    var movedX = centerX + ((Math.max(-100, Math.min(100, initialX)) / 100) * maxMoveStick);
+    var movedY = centerY - ((Math.max(-100, Math.min(100, initialY)) / 100) * maxMoveStick);
 
     // Check if the device support the touch or not
     if("ontouchstart" in document.documentElement)
@@ -242,11 +250,8 @@ var JoyStick = (function(container, parameters, callback)
     {
         pressed = 0;
         // If required reset position store variable
-        if(autoReturnToCenter)
-        {
-            movedX = centerX;
-            movedY = centerY;
-        }
+        if(autoReturnToCenterX) { movedX = centerX; }
+        if(autoReturnToCenterY) { movedY = centerY; }
         // Delete canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
         // Redraw object
@@ -330,11 +335,8 @@ var JoyStick = (function(container, parameters, callback)
     {
         pressed = 0;
         // If required reset position store variable
-        if(autoReturnToCenter)
-        {
-            movedX = centerX;
-            movedY = centerY;
-        }
+        if(autoReturnToCenterX) { movedX = centerX; }
+        if(autoReturnToCenterY) { movedY = centerY; }
         // Delete canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
         // Redraw object
@@ -460,5 +462,25 @@ var JoyStick = (function(container, parameters, callback)
     this.GetDir = function()
     {
         return getCardinalDirection();
+    };
+
+    /**
+     * @desc Set normalized stick position.
+     * @param x Integer from -100 to +100
+     * @param y Integer from -100 to +100
+     */
+    this.SetPosition = function (x, y)
+    {
+        movedX = centerX + ((Math.max(-100, Math.min(100, x)) / 100) * maxMoveStick);
+        movedY = centerY - ((Math.max(-100, Math.min(100, y)) / 100) * maxMoveStick);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        drawExternal();
+        drawInternal();
+        StickStatus.xPosition = movedX;
+        StickStatus.yPosition = movedY;
+        StickStatus.x = (100*((movedX - centerX)/maxMoveStick)).toFixed();
+        StickStatus.y = ((100*((movedY - centerY)/maxMoveStick))*-1).toFixed();
+        StickStatus.cardinalDirection = getCardinalDirection();
+        callback(StickStatus);
     };
 });
