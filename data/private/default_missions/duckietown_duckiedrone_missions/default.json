@@ -18,6 +18,23 @@
             },
             {
                 "shape": {
+                    "rows": 2,
+                    "cols": 5
+                },
+                "renderer": "DuckietownMsgs_DroneMotorCommand",
+                "title": "Motors PWM",
+                "subtitle": "/mavros/rc/out",
+                "args": {
+                    "ros_hostname": "",
+                    "topic": "/mavros/rc/out",
+                    "message_type": "mavros_msgs/RCOut",
+                    "fps": 5,
+                    "min_value": 900,
+                    "max_value": 2000
+                }
+            },
+            {
+                "shape": {
                     "rows": 1,
                     "cols": 3
                 },
@@ -86,7 +103,7 @@
                     "rows": 2,
                     "cols": 5
                 },
-                "renderer": "SensorMsgs_Range",
+                "renderer": "Duckiedrone_Altitude",
                 "title": "Altitude",
                 "subtitle": "/altitude_node/altitude",
                 "args": {
@@ -94,8 +111,7 @@
                     "topic": "~/altitude_node/altitude",
                     "reference": "~/pid_controller_node/desired/height",
                     "label": "Altitude",
-                    "fps": 5,
-                    "rendering": "plot"
+                    "fps": 5
                 }
             },
             {
