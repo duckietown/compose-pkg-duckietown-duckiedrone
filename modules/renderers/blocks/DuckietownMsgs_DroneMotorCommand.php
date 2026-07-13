@@ -140,6 +140,7 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
                 window.mission_control_page_blocks_data['<?php echo $id ?>'] = {
                     chart: chart,
                     config: chart_config,
+                    // Prevent primary and fallback subscriptions from updating the same chart at once.
                     activeSource: null
                 };
 
@@ -153,8 +154,8 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
                     let chart = chart_desc.chart;
                     let config = chart_desc.config;
                     let yAxisTicks = config.options.scales.yAxes[0].ticks;
-                    let observedMin = Math.min(values[0], values[1], values[2], values[3]);
-                    let observedMax = Math.max(values[0], values[1], values[2], values[3]);
+                    let observedMin = Math.min(...values);
+                    let observedMax = Math.max(...values);
                     if (observedMin < yAxisTicks.suggestedMin) {
                         yAxisTicks.suggestedMin = observedMin;
                     }

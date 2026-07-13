@@ -160,6 +160,7 @@ class Duckiedrone_Altitude extends BlockRenderer {
                     let suggested_max = 1.0;
 
                     if (plotted_values.length > 0) {
+                        // Always include ground level so zero altitude stays visible on the chart.
                         plotted_values.push(0.0);
                         observed_min = Math.min.apply(null, plotted_values);
                         observed_max = Math.max.apply(null, plotted_values);
