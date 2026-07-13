@@ -1,3 +1,16 @@
+## 2.2.5 (July 13, 2026)
+  - chore: address renderer review follow-ups
+  - fix: trim renderer topic configuration in php
+  - fix: resolve master merge conflicts
+  - fix: add resize observer for control rendering and fix stale comments
+  - refactor the Joystick UI for stabilized mode
+  - add stabilized mode
+  - fix(dashboard): clear legacy control canvas redraws
+  - fix(dashboard): preserve legacy joystick controls
+  - Initial plan
+  - refactor the Joystick UI for stabilized mode
+  - add stabilized mode
+
 ## 2.2.4 (July 10, 2026)
   - Merge pull request #11 from duckietown/DTSW-7986-Update-Dashboard
   - feat(dashboard): add Altitude and Motors PWM widgets to the dashboard
