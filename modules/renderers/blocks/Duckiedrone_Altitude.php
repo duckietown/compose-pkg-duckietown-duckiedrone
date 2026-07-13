@@ -66,7 +66,7 @@ class Duckiedrone_Altitude extends BlockRenderer {
                 });
 
                 let has_reference_topic = <?php echo $has_reference_topic ? 'true' : 'false' ?>;
-                let reference_topic_name = '<?php echo $reference_topic ?>'.trim();
+                let reference_topic_name = <?php echo json_encode($reference_topic) ?>;
                 let reference_value = null;
                 let time_horizon_secs = 20;
                 let color = Chart.helpers.color;

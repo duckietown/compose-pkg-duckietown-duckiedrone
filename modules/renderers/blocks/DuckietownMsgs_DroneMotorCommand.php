@@ -56,6 +56,9 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
     ];
     
     protected static function render($id, &$args) {
+        $topic_name = trim($args['topic'] ?? '');
+        $message_type = trim($args['message_type'] ?? '');
+        $fallback_topic = trim($args['fallback_topic'] ?? '/mavros/rc/out');
         ?>
         <canvas class="resizable" style="width:100%; height:95%; padding:6px 16px"></canvas>
         <?php
@@ -68,9 +71,9 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
             $(document).on("<?php echo $connected_evt ?>", function (evt) {
                 const legacyMessageType = 'duckietown_msgs/DroneMotorCommand';
                 const mavrosMessageType = 'mavros_msgs/RCOut';
-                const topicName = '<?php echo $args['topic'] ?>'.trim();
-                const explicitMessageType = '<?php echo $args['message_type'] ?? '' ?>'.trim();
-                const fallbackTopicName = '<?php echo $args['fallback_topic'] ?? '/mavros/rc/out' ?>'.trim();
+                const topicName = <?php echo json_encode($topic_name) ?>;
+                const explicitMessageType = <?php echo json_encode($message_type) ?>;
+                const fallbackTopicName = <?php echo json_encode($fallback_topic) ?>;
                 const resolvedMessageType = explicitMessageType.length > 0
                     ? explicitMessageType
                     : (topicName === '/mavros/rc/out' ? mavrosMessageType : legacyMessageType);
