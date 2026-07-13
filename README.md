@@ -5,7 +5,7 @@
 This package is consumed by the dashboard via [`dependencies-compose.txt`](../../robot/dt-device-dashboard/dependencies-compose.txt):
 
 ```
-duckietown_duckiedrone==v2.2.2
+duckietown_duckiedrone==v2.2.3
 ```
 
 The dashboard runs inside [`\compose\`](https://github.com/afdaniele/compose), a PHP package system. This repo is one of those packages.
@@ -24,9 +24,11 @@ compose-pkg-duckietown-duckiedrone/
 │   └── renderers/
 │       └── blocks/               # Widget definitions (PHP BlockRenderer classes)
 │           ├── Duckiedrone_Arming.php         # class Mavros_Arming
+│           ├── Duckiedrone_Altitude.php
 │           ├── Duckiedrone_Control.php
 │           ├── Duckiedrone_Heartbeat.php
 │           ├── Duckiedrone_Heartbeats_Monitor.php
+│           ├── Duckiedrone_IMU_Orientation.php
 │           └── DuckietownMsgs_DroneMotorCommand.php
 ├── data/
 │   └── private/
@@ -65,12 +67,29 @@ The `$id` is unique per widget instance; use it to namespace DOM ids and JS vari
 | File | Class | Purpose |
 |---|---|---|
 | `Duckiedrone_Arming.php` | `Mavros_Arming` | ARM/DISARM toggle + flight-mode toggle (OFFBOARD/ALTITUDE) + kill switch + takeoff button. Talks to mavros services. |
+| `Duckiedrone_Altitude.php` | `Duckiedrone_Altitude` | Altitude plot for `/altitude_node/altitude` with a desired-height overlay and dynamic Y-axis scaling based on live samples. |
 | `Duckiedrone_Control.php` | `Duckiedrone_Control` | Virtual joystick publishing to `/mavros/manual_control/send`, reading `/mavros/state`, with optional legacy override params for older fly-commands mux setups. |
 | `Duckiedrone_Heartbeat.php` | `Duckiedrone_Heartbeat` | Single-topic heartbeat indicator. |
 | `Duckiedrone_Heartbeats_Monitor.php` | `Duckiedrone_Heartbeats_Monitor` | Multi-topic heartbeat grid for joystick / altitude / state_estimator / pid. |
-| `DuckietownMsgs_DroneMotorCommand.php` | `DuckietownMsgs_DroneMotorCommand` | Bar chart of the four motor PWM values for legacy `flight_controller_node` deployments. |
+| `DuckietownMsgs_DroneMotorCommand.php` | `DuckietownMsgs_DroneMotorCommand` | Bar chart of the four motor PWM values. Reads legacy `flight_controller_node/motors` messages and falls back to `/mavros/rc/out` for PX4/MAVROS deployments. |
 
 The current shell-managed Duckiedrone stacks use MAVROS and PX4 calibration endpoints by default. The shipped mission therefore targets `/mavros/*` and `/px4_calibration/*`; legacy `/flight_controller_node/*` and `/fly_commands_mux_node/*` hooks remain available only for manual compatibility with older deployments.
+
+### Current default mission panels
+
+The default Duckiedrone mission currently renders these panels, in this order:
+
+| Panel | Renderer | Surface | Notes |
+|---|---|---|---|
+| `Joystick Heartbeat` | `Duckiedrone_Heartbeat` | `~/joystick/heartbeat` | Robot-scoped heartbeat pulse. |
+| `Motors PWM` | `DuckietownMsgs_DroneMotorCommand` | `/mavros/rc/out` | Reads `mavros_msgs/RCOut` directly. |
+| `Heartbeats Monitor` | `Duckiedrone_Heartbeats_Monitor` | `~/joystick/heartbeat`, `~/altitude_node/heartbeat`, `~/state_estimator_node/heartbeat`, `~/pid_controller_node/heartbeat` | Aggregated liveness grid for the main companion nodes. |
+| `Remote Control` | `Duckiedrone_Control` | `/mavros/manual_control/send`, `/mavros/state` | Virtual joystick plus live command bars. |
+| `Arm / Disarm` | `Mavros_Arming` | `/mavros/cmd/arming`, `/mavros/cmd/command`, `/mavros/set_mode`, `/mavros/state` | ARM/DISARM, flight mode, kill switch. |
+| `Altitude` | `Duckiedrone_Altitude` | `~/altitude_node/altitude`, `~/pid_controller_node/desired/height` | Tilt-corrected altitude with desired-height overlay. |
+| `Time-of-Flight` | `SensorMsgs_Range` | `~/bottom_tof_driver_node/range` | Shared `ros` package renderer in numeric mode. |
+| `IMU - Orientation` | `Duckiedrone_IMU_Orientation` | `/mavros/imu/data` | Roll/pitch/yaw plot plus PX4 calibration controls. |
+| `Camera` | `SensorMsgs_CompressedImage` | `~/camera_node/image/compressed` | Shared `ros` package renderer. |
 
 ### Anatomy of a widget (writing a new one)
 
@@ -162,9 +181,9 @@ Edit `data/private/default_missions/duckietown_duckiedrone_missions/default.json
 
 The `renderer` field must match the PHP class name (not the filename).
 
-> **Known issue — `~/` path resolution.** The default mission currently ships with `~/mavros/...` paths for topics and services. On a virtual drone, rosbridge resolves `~` to `/<robot>/rosbridge_websocket`, not to `/`, so these services don't exist at that path and the corresponding widgets fail silently. Prefer absolute paths (`/mavros/cmd/arming`, `/mavros/state`, etc.) in new mission entries until the upstream `ROS::sanitize_hostname` behavior is fixed. See `docs/dashboard-test-report/README.md`.
+> **Known issue — `~/` path resolution for shared endpoints.** On a virtual drone, rosbridge resolves `~` to `/<robot>/rosbridge_websocket`, not to `/`. That breaks entries like `~/mavros/...` and `~/px4_calibration/...` because those shared services/topics do not live under the robot namespace. Prefer absolute paths (`/mavros/cmd/arming`, `/mavros/state`, `/px4_calibration/...`) for MAVROS and PX4 calibration endpoints until the upstream `ROS::sanitize_hostname` behavior is fixed. See `docs/dashboard-test-report/README.md`.
 
-The default Duckiedrone mission in this repo already follows that rule for the live MAVROS and PX4 calibration endpoints.
+The default Duckiedrone mission in this repo already follows that rule for MAVROS and PX4 calibration endpoints, while intentionally keeping `~/...` for robot-scoped topics such as `~/joystick/heartbeat`, `~/altitude_node/altitude`, and `~/camera_node/image/compressed`.
 
 ---
 
@@ -180,7 +199,7 @@ From [`robot/dt-device-dashboard`](../../robot/dt-device-dashboard):
 dts devel build
 ```
 
-This pulls `duckietown_duckiedrone==v2.2.2` (or whichever version is pinned). You need the package installed in the image at least once so that the autoload paths exist.
+This pulls `duckietown_duckiedrone==v2.2.3` (or whichever version is pinned). You need the package installed in the image at least once so that the autoload paths exist.
 
 ### 2. Run the sandbox with this package mounted
 
@@ -212,8 +231,8 @@ Update `CHANGELOG.md` with a new entry, then bump the pin in [`robot/dt-device-d
 
 ### 5. Deploy
 
-1. Tag and push this package: the `ente` branch tag (e.g. `v2.2.2`) is what `dependencies-compose.txt` references.
-2. In `dt-device-dashboard`, bump `duckietown_duckiedrone==v2.2.2` in `dependencies-compose.txt`, commit, push.
+1. Tag and push this package: the `ente` branch tag (e.g. `v2.2.3`) is what `dependencies-compose.txt` references.
+2. In `dt-device-dashboard`, bump `duckietown_duckiedrone==v2.2.3` in `dependencies-compose.txt`, commit, push.
 3. Rebuild and publish the dashboard image; it is then picked up the next time `dts duckiebot update ROBOT_NAME` runs on a robot.
 
 ---

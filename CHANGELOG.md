@@ -1,3 +1,7 @@
+## 2.2.4 (July 10, 2026)
+  - Merge pull request #11 from duckietown/DTSW-7986-Update-Dashboard
+  - feat(dashboard): add Altitude and Motors PWM widgets to the dashboard
+
 ## 2.2.3 (July 02, 2026)
   - Merge pull request #10 from duckietown/DTSW-7986-Update-Dashboard
   - fix(dashboard): add missing semicolons in heartbeats monitor logic
