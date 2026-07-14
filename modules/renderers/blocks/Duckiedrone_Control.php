@@ -207,7 +207,7 @@ class Duckiedrone_Control extends BlockRenderer {
             const CONST_YAW_KEY_VALUE = 60;              // joystick-X magnitude while a yaw key is held (> deadband)
             const CONST_THROTTLE_STEP_COARSE = 25;       // throttle units (z, [0,1000]) added per tick below the hover threshold
             const CONST_THROTTLE_STEP_FINE = 10;         // throttle units per tick at/above the hover threshold (fine hover trim)
-            const CONST_DEFAULT_HOVER_THRESHOLD = 400;   // fallback until the user calibrates their own value below
+            const CONST_DEFAULT_HOVER_THRESHOLD = 100;   // conservatively low until the user calibrates their own value below
             
             function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color) {
                 //variables to be used when creating the arrow
