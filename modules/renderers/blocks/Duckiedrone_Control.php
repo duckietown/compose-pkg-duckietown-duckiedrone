@@ -120,47 +120,65 @@ class Duckiedrone_Control extends BlockRenderer {
                 <td class="col-md-4 text-left">
                     Intensity
                 </td>
-                <td rowspan="5" class="col-md-1 text-center" style="padding: 0">
-                    <canvas id="drone_control_commands_throttle_gauge" width="50px" height="150px"></canvas>
-                    <div style="margin-top: 4px">
-                        <label for="drone_control_commands_hover_threshold" style="font-size: 10px; display: block; white-space: nowrap">Hover threshold</label>
+                <td rowspan="5" class="col-md-1 text-center" style="padding: 0; vertical-align: middle">
+                    <canvas id="drone_control_commands_throttle_gauge" width="56px" height="110px"></canvas>
+                    <div style="margin-top: 3px"
+                         data-toggle="tooltip" data-placement="top"
+                         title="The throttle where the drone lifts off. Below it throttle rises fast, above it rises slowly for fine control. Blue line on the gauge.">
+                        <label for="drone_control_commands_hover_threshold" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Hover</label>
                         <input type="number" id="drone_control_commands_hover_threshold"
                                min="0" max="1000" step="1"
-                               style="width: 60px; font-size: 11px; padding: 1px 3px">
+                               style="width: 56px; font-size: 13px; padding: 1px 3px">
+                    </div>
+                    <div style="margin-top: 5px"
+                         data-toggle="tooltip" data-placement="top"
+                         title="The most throttle allowed. The drone never goes above this, whatever the keyboard or joystick asks for. Red line on the gauge.">
+                        <label for="drone_control_commands_max_throttle" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Thrust Cap</label>
+                        <input type="number" id="drone_control_commands_max_throttle"
+                               min="0" max="1000" step="1"
+                               style="width: 56px; font-size: 13px; padding: 1px 3px">
                     </div>
                 </td>
-                <td rowspan="5" class="col-md-2 text-center" style="padding: 0">
-                    <canvas id="drone_control_commands_joy_keys" width="150px" height="150px"></canvas>
+                <td rowspan="5" class="col-md-2 text-center" style="padding: 0; vertical-align: middle">
+                    <canvas id="drone_control_commands_joy_keys" width="150px" height="134px"></canvas>
+                    <div style="font-size: 13px; color: #555">Roll / Pitch</div>
                 </td>
-                <td rowspan="5" class="col-md-2 text-center" style="padding: 0">
-                    <div id="drone_control_commands_joy_stick" style="width:160px;height:160px;margin:0;"></div>
+                <td rowspan="5" class="col-md-2 text-center" style="padding: 0; vertical-align: middle">
+                    <div id="drone_control_commands_joy_stick" style="width:120px;height:120px;margin:0 auto;"></div>
+                    <div style="font-size: 13px; color: #555">Yaw / Throttle</div>
                 </td>
             </tr>
             <?php
             $bars = [
                 [
                     "id" => "roll",
-                    "label" => "Roll"
+                    "label" => "Roll",
+                    "tooltip" => "Tilt left or right. Keys A and D."
                 ],
                 [
                     "id" => "pitch",
-                    "label" => "Pitch"
+                    "label" => "Pitch",
+                    "tooltip" => "Tilt forward or back. Keys W and S."
                 ],
                 [
                     "id" => "yaw",
-                    "label" => "Yaw"
+                    "label" => "Yaw",
+                    "tooltip" => "Turn left or right. Left and right arrow keys."
                 ],
                 [
                     "id" => "throttle",
-                    "label" => "Throttle"
+                    "label" => "Throttle",
+                    "tooltip" => "More or less thrust. Up and down arrow keys. Stays where it is left."
                 ],
             ];
             
             foreach ($bars as &$bar) {
                 ?>
                 <tr style="height: 20px">
-                    <td class="col-md-1" style="text-align: right">
-                        <p class=text-right" style="margin: 0"><?php echo $bar["label"] ?></p>
+                    <td class="col-md-1" style="text-align: right"
+                        data-toggle="tooltip" data-placement="top"
+                        title="<?php echo $bar["tooltip"] ?>">
+                        <p class="text-right" style="margin: 0"><?php echo $bar["label"] ?></p>
                     </td>
                     <td class="col-md-1">
                         <input type="checkbox"
@@ -187,6 +205,17 @@ class Duckiedrone_Control extends BlockRenderer {
                 <?php
             }
             ?>
+            <tr>
+                <td colspan="6" style="padding: 2px 4px 0; border-top: 1px solid #eee">
+                    <div style="font-size: 14px; color: #666; text-align: center; line-height: 1.5">
+                        <b>A</b> / <b>D</b> = Roll (Roll Left / Right)
+                        &nbsp;&middot;&nbsp; <b>W</b> / <b>S</b> = Pitch (Pitch Forward / Back)
+                        &nbsp;&middot;&nbsp; <b>&larr;</b> / <b>&rarr;</b> = Yaw (Yaw Left / Right)
+                        &nbsp;&middot;&nbsp; <b>&uarr;</b> / <b>&darr;</b> = Throttle (More / Less)
+                        &nbsp;&middot;&nbsp; <b>Space</b> = Disarm
+                    </div>
+                </td>
+            </tr>
         </table>
         
         <!-- Include ROS -->
@@ -208,6 +237,7 @@ class Duckiedrone_Control extends BlockRenderer {
             const CONST_THROTTLE_STEP_COARSE = 25;       // throttle units (z, [0,1000]) added per tick below the hover threshold
             const CONST_THROTTLE_STEP_FINE = 10;         // throttle units per tick at/above the hover threshold (fine hover trim)
             const CONST_DEFAULT_HOVER_THRESHOLD = 100;   // conservatively low until the user calibrates their own value below
+            const CONST_DEFAULT_MAX_THROTTLE = 500;      // hard ceiling on thrust; command can never exceed this (z, [0,1000])
             
             function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color) {
                 //variables to be used when creating the arrow
@@ -251,11 +281,12 @@ class Duckiedrone_Control extends BlockRenderer {
             }
 
             // Vertical throttle gauge for the `z` command [0,1000]: fill height tracks
-            // current throttle, a red line marks the user-calibrated hover_threshold, and
-            // the fill turns green once z crosses it.
-            function drawThrottleGauge(gctx, z, hover_threshold) {
+            // current throttle, a blue line marks the user-calibrated hover_threshold, a red
+            // line marks the max_throttle ceiling, and the fill turns green once z crosses
+            // the hover threshold.
+            function drawThrottleGauge(gctx, z, hover_threshold, max_throttle) {
                 let W = gctx.canvas.width, H = gctx.canvas.height;
-                let pad = 4, barW = 22, labelH = 14;
+                let pad = 4, barW = 26, labelH = 16;
                 let x0 = (W - barW) / 2, y0 = pad, barH = H - pad * 2 - labelH;
                 gctx.clearRect(0, 0, W, H);
 
@@ -282,18 +313,27 @@ class Duckiedrone_Control extends BlockRenderer {
                     gctx.stroke();
                 }
 
-                // hover_threshold marker line
+                // hover_threshold marker line (blue)
                 let thY = y0 + barH - barH * (hover_threshold / 1000);
-                gctx.strokeStyle = '#d9534f';
+                gctx.strokeStyle = '#337ab7';
                 gctx.lineWidth = 2;
                 gctx.beginPath();
                 gctx.moveTo(x0 - 3, thY);
                 gctx.lineTo(x0 + barW + 3, thY);
                 gctx.stroke();
 
+                // max_throttle ceiling line (red)
+                let ceilY = y0 + barH - barH * (max_throttle / 1000);
+                gctx.strokeStyle = '#d9534f';
+                gctx.lineWidth = 2;
+                gctx.beginPath();
+                gctx.moveTo(x0 - 3, ceilY);
+                gctx.lineTo(x0 + barW + 3, ceilY);
+                gctx.stroke();
+
                 // z as a percentage of full throttle
                 gctx.fillStyle = '#000';
-                gctx.font = '11px monospace';
+                gctx.font = '13px monospace';
                 gctx.textAlign = 'center';
                 gctx.fillText(Math.round(frac * 100) + '%', W / 2, H - 2);
             }
@@ -428,21 +468,56 @@ class Duckiedrone_Control extends BlockRenderer {
 
                 let armed = false;
 
+                // Settings persist per widget instance across page reloads. localStorage can
+                // throw (private browsing, sandboxed iframe, storage disabled), so both calls
+                // are wrapped: a storage failure must never stop the setup below, or the
+                // manual_control publish loop would die and the drone could not arm.
+                function load_setting(key, fallback) {
+                    try {
+                        return Number(localStorage.getItem(key)) || fallback;
+                    } catch (e) {
+                        return fallback;
+                    }
+                }
+                function save_setting(key, value) {
+                    try {
+                        localStorage.setItem(key, value);
+                    } catch (e) {}
+                }
+
                 // Hover threshold: the z value where this specific drone leaves the ground.
-                // Users find it by ramping throttle up with the keyboard and reading the
-                // gauge/bar, then typing it in here so the coarse->fine ramp switchover
-                // and the gauge threshold line line up with their airframe. Persisted per
-                // widget instance so it survives page reloads.
+                // Users find it by ramping throttle up and reading the gauge/bar, then typing
+                // it in so the coarse->fine ramp switchover and the gauge line match their
+                // airframe.
                 const hover_threshold_storage_key = 'drone_control_hover_threshold_<?php echo $id ?>';
-                let hover_threshold = Number(localStorage.getItem(hover_threshold_storage_key)) || CONST_DEFAULT_HOVER_THRESHOLD;
+                let hover_threshold = load_setting(hover_threshold_storage_key, CONST_DEFAULT_HOVER_THRESHOLD);
                 let hover_threshold_input = $('#<?php echo $id ?> #drone_control_commands_hover_threshold');
                 hover_threshold_input.val(hover_threshold);
                 hover_threshold_input.on('change', function () {
                     let entered = Math.max(0, Math.min(1000, Number($(this).val()) || CONST_DEFAULT_HOVER_THRESHOLD));
                     hover_threshold = entered;
                     $(this).val(entered);
-                    localStorage.setItem(hover_threshold_storage_key, entered);
+                    save_setting(hover_threshold_storage_key, entered);
                 });
+
+                // Max throttle: hard ceiling on the z command. Thrust can never be commanded
+                // above this, whatever the keyboard ramp or joystick asks for.
+                const max_throttle_storage_key = 'drone_control_max_throttle_<?php echo $id ?>';
+                let max_throttle = load_setting(max_throttle_storage_key, CONST_DEFAULT_MAX_THROTTLE);
+                let max_throttle_input = $('#<?php echo $id ?> #drone_control_commands_max_throttle');
+                max_throttle_input.val(max_throttle);
+                max_throttle_input.on('change', function () {
+                    let entered = Math.max(0, Math.min(1000, Number($(this).val()) || CONST_DEFAULT_MAX_THROTTLE));
+                    max_throttle = entered;
+                    $(this).val(entered);
+                    save_setting(max_throttle_storage_key, entered);
+                });
+
+                // Native title tooltips always work; upgrade to Bootstrap tooltips when the
+                // plugin is present. Guarded so a missing plugin cannot break setup.
+                try {
+                    $('#<?php echo $id ?> [data-toggle="tooltip"]').tooltip();
+                } catch (e) {}
             
                 if (hasOverrideParams) {
                     $('#<?php echo $id ?> #drone_control_commands_override_roll').change(function() {
@@ -539,7 +614,8 @@ class Duckiedrone_Control extends BlockRenderer {
                     let y = Number(joy_stick_data.y);
                     // throttle: map joystick Y (-100 to 100) to [0, 1000]
                     // y=-100 -> 0, y=0 -> 500, y=100 -> 1000
-                    let throttle = Math.round((y + 100) * 5);
+                    // then apply the hard ceiling so nothing published can exceed it
+                    let throttle = Math.min(max_throttle, Math.round((y + 100) * 5));
                     
                     // deadzone for yaw
                     if (Math.abs(x) < CONST_JOY_YAW_DEADBAND) x = 0;
@@ -618,7 +694,7 @@ class Duckiedrone_Control extends BlockRenderer {
                         let step = (z < hover_threshold)
                             ? CONST_THROTTLE_STEP_COARSE : CONST_THROTTLE_STEP_FINE;
                         z += thr_up ? step : -step;
-                        z = Math.max(0, Math.min(1000, z));
+                        z = Math.max(0, Math.min(max_throttle, z));
                         new_y = z / 5 - 100;
                         update_stick = true;
                     }
@@ -666,7 +742,7 @@ class Duckiedrone_Control extends BlockRenderer {
                     let joy_axes = map_to_real(front, back, left, right);
                     publish_joy_cmd(joy_axes, {});
 
-                    drawThrottleGauge(gauge_ctx, joy_axes.throttle, hover_threshold);
+                    drawThrottleGauge(gauge_ctx, joy_axes.throttle, hover_threshold, max_throttle);
                 }
                 
                 setInterval(main_loop, 50);
