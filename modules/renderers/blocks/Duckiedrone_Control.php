@@ -117,8 +117,17 @@ class Duckiedrone_Control extends BlockRenderer {
                 <td class="col-md-1 text-center">
                     Override
                 </td>
-                <td class="col-md-6 text-left">
+                <td class="col-md-4 text-left">
                     Intensity
+                </td>
+                <td rowspan="5" class="col-md-1 text-center" style="padding: 0">
+                    <canvas id="drone_control_commands_throttle_gauge" width="50px" height="150px"></canvas>
+                    <div style="margin-top: 4px">
+                        <label for="drone_control_commands_hover_threshold" style="font-size: 10px; display: block; white-space: nowrap">Hover threshold</label>
+                        <input type="number" id="drone_control_commands_hover_threshold"
+                               min="0" max="1000" step="1"
+                               style="width: 60px; font-size: 11px; padding: 1px 3px">
+                    </div>
                 </td>
                 <td rowspan="5" class="col-md-2 text-center" style="padding: 0">
                     <canvas id="drone_control_commands_joy_keys" width="150px" height="150px"></canvas>
@@ -193,6 +202,12 @@ class Duckiedrone_Control extends BlockRenderer {
             
             const CONST_JOY_YAW_DEADBAND = 20;
             const CONST_MAX_ROLL_PITCH = <?php echo $args['max_roll_pitch'] ?? self::$ARGUMENTS['max_roll_pitch']['default'] ?>;
+
+            // Keyboard yaw/throttle (arrow keys). Tune per airframe.
+            const CONST_YAW_KEY_VALUE = 60;              // joystick-X magnitude while a yaw key is held (> deadband)
+            const CONST_THROTTLE_STEP_COARSE = 25;       // throttle units (z, [0,1000]) added per tick below the hover threshold
+            const CONST_THROTTLE_STEP_FINE = 10;         // throttle units per tick at/above the hover threshold (fine hover trim)
+            const CONST_DEFAULT_HOVER_THRESHOLD = 400;   // fallback until the user calibrates their own value below
             
             function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color) {
                 //variables to be used when creating the arrow
@@ -234,7 +249,55 @@ class Duckiedrone_Control extends BlockRenderer {
                 ctx.stroke();
                 ctx.restore();
             }
-      
+
+            // Vertical throttle gauge for the `z` command [0,1000]: fill height tracks
+            // current throttle, a red line marks the user-calibrated hover_threshold, and
+            // the fill turns green once z crosses it.
+            function drawThrottleGauge(gctx, z, hover_threshold) {
+                let W = gctx.canvas.width, H = gctx.canvas.height;
+                let pad = 4, barW = 22, labelH = 14;
+                let x0 = (W - barW) / 2, y0 = pad, barH = H - pad * 2 - labelH;
+                gctx.clearRect(0, 0, W, H);
+
+                let frac = Math.max(0, Math.min(1, z / 1000));
+                let aboveThresh = z >= hover_threshold;
+
+                // filled portion: grey while grounded, green once airborne
+                let fillH = barH * frac;
+                gctx.fillStyle = aboveThresh ? '#28a745' : '#888';
+                gctx.fillRect(x0, y0 + barH - fillH, barW, fillH);
+
+                // frame
+                gctx.strokeStyle = '#333';
+                gctx.lineWidth = 1;
+                gctx.strokeRect(x0, y0, barW, barH);
+
+                // tick marks every 25%
+                gctx.strokeStyle = '#bbb';
+                for (let f = 0.25; f < 1; f += 0.25) {
+                    let ty = y0 + barH - barH * f;
+                    gctx.beginPath();
+                    gctx.moveTo(x0, ty);
+                    gctx.lineTo(x0 + 4, ty);
+                    gctx.stroke();
+                }
+
+                // hover_threshold marker line
+                let thY = y0 + barH - barH * (hover_threshold / 1000);
+                gctx.strokeStyle = '#d9534f';
+                gctx.lineWidth = 2;
+                gctx.beginPath();
+                gctx.moveTo(x0 - 3, thY);
+                gctx.lineTo(x0 + barW + 3, thY);
+                gctx.stroke();
+
+                // z as a percentage of full throttle
+                gctx.fillStyle = '#000';
+                gctx.font = '11px monospace';
+                gctx.textAlign = 'center';
+                gctx.fillText(Math.round(frac * 100) + '%', W / 2, H - 2);
+            }
+
             // data types
             class JoyAxes {
                 constructor(left_right, front_back, cw_ccw, up_down) {
@@ -344,7 +407,8 @@ class Duckiedrone_Control extends BlockRenderer {
                 }
             
                 let ctx = document.getElementById("drone_control_commands_joy_keys").getContext('2d');
-                
+                let gauge_ctx = document.getElementById("drone_control_commands_throttle_gauge").getContext('2d');
+
                 let roll_bar = $('#<?php echo $id ?> #drone_control_commands_bar_roll');
                 let pitch_bar = $('#<?php echo $id ?> #drone_control_commands_bar_pitch');
                 let yaw_bar = $('#<?php echo $id ?> #drone_control_commands_bar_yaw');
@@ -360,8 +424,25 @@ class Duckiedrone_Control extends BlockRenderer {
                     joy_stick_data.y = data.y;
                 });
                 let joy_keys = new Set([]);
-                
+                let kb_yaw_prev = false; // true if a yaw key was held last tick (to recenter on release)
+
                 let armed = false;
+
+                // Hover threshold: the z value where this specific drone leaves the ground.
+                // Users find it by ramping throttle up with the keyboard and reading the
+                // gauge/bar, then typing it in here so the coarse->fine ramp switchover
+                // and the gauge threshold line line up with their airframe. Persisted per
+                // widget instance so it survives page reloads.
+                const hover_threshold_storage_key = 'drone_control_hover_threshold_<?php echo $id ?>';
+                let hover_threshold = Number(localStorage.getItem(hover_threshold_storage_key)) || CONST_DEFAULT_HOVER_THRESHOLD;
+                let hover_threshold_input = $('#<?php echo $id ?> #drone_control_commands_hover_threshold');
+                hover_threshold_input.val(hover_threshold);
+                hover_threshold_input.on('change', function () {
+                    let entered = Math.max(0, Math.min(1000, Number($(this).val()) || CONST_DEFAULT_HOVER_THRESHOLD));
+                    hover_threshold = entered;
+                    $(this).val(entered);
+                    localStorage.setItem(hover_threshold_storage_key, entered);
+                });
             
                 if (hasOverrideParams) {
                     $('#<?php echo $id ?> #drone_control_commands_override_roll').change(function() {
@@ -486,17 +567,23 @@ class Duckiedrone_Control extends BlockRenderer {
                     return new JoyAxes(roll, pitch, yaw, throttle);
                 }
                 
+                // Keys this widget owns for flight control. Always prevented from doing
+                // their default browser thing (space/arrows scroll the page) regardless
+                // of arm state, so the page never scrolls out from under the pilot.
+                const CONTROL_KEYS = ['w', 'a', 's', 'd', ' ',
+                    'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
+
                 $(document).on("keyup", (e) => {
                     let key = e.key.toLowerCase();
-                    if (['w', 'a', 's', 'd', ' '].indexOf(key) >= 0 && armed) {
+                    if (CONTROL_KEYS.indexOf(key) >= 0) {
                         e.preventDefault();
                     }
                     joy_keys.delete(key);
                 });
-                
+
                 $(document).on("keydown", (e) => {
                     let key = e.key.toLowerCase();
-                    if (['w', 'a', 's', 'd', ' '].indexOf(key) >= 0 && armed) {
+                    if (CONTROL_KEYS.indexOf(key) >= 0) {
                         e.preventDefault();
                     }
                     if (key === " ") {
@@ -513,7 +600,44 @@ class Duckiedrone_Control extends BlockRenderer {
                     let back = joy_keys.has("s");
                     let left = joy_keys.has("a");
                     let right = joy_keys.has("d");
-                    
+
+                    // keyboard yaw (arrows L/R) and throttle (arrows U/D) drive the joystick,
+                    // keeping joy_stick_data the single source of truth shared with the mouse.
+                    let yaw_left = joy_keys.has("arrowleft");
+                    let yaw_right = joy_keys.has("arrowright");
+                    let thr_up = joy_keys.has("arrowup");
+                    let thr_down = joy_keys.has("arrowdown");
+
+                    let new_x = Number(joy_stick_data.x);
+                    let new_y = Number(joy_stick_data.y);
+                    let update_stick = false;
+
+                    // throttle: ramp and hold (coarse below the hover threshold, fine above)
+                    if (thr_up || thr_down) {
+                        let z = (new_y + 100) * 5; // joystick-Y -> throttle [0,1000]
+                        let step = (z < hover_threshold)
+                            ? CONST_THROTTLE_STEP_COARSE : CONST_THROTTLE_STEP_FINE;
+                        z += thr_up ? step : -step;
+                        z = Math.max(0, Math.min(1000, z));
+                        new_y = z / 5 - 100;
+                        update_stick = true;
+                    }
+
+                    // yaw: momentary, recenters on release (like roll/pitch)
+                    let kb_yaw = yaw_left || yaw_right;
+                    if (kb_yaw) {
+                        new_x = yaw_left ? -CONST_YAW_KEY_VALUE : CONST_YAW_KEY_VALUE;
+                        update_stick = true;
+                    } else if (kb_yaw_prev) {
+                        new_x = 0;
+                        update_stick = true;
+                    }
+                    kb_yaw_prev = kb_yaw;
+
+                    if (update_stick) {
+                        joy_stick.SetPosition(new_x, new_y);
+                    }
+
                     let line_width = 20;
                     let pos = {
                         up: [50, 45, 50, 10],
@@ -541,6 +665,8 @@ class Duckiedrone_Control extends BlockRenderer {
                     
                     let joy_axes = map_to_real(front, back, left, right);
                     publish_joy_cmd(joy_axes, {});
+
+                    drawThrottleGauge(gauge_ctx, joy_axes.throttle, hover_threshold);
                 }
                 
                 setInterval(main_loop, 50);
