@@ -87,7 +87,7 @@ The default Duckiedrone mission currently renders these panels, in this order:
 | `Remote Control` | `Duckiedrone_Control` | `/mavros/manual_control/send`, `/mavros/state` | Virtual joystick plus live command bars. |
 | `Arm / Disarm` | `Mavros_Arming` | `/mavros/cmd/arming`, `/mavros/cmd/command`, `/mavros/set_mode`, `/mavros/state` | ARM/DISARM, flight mode, kill switch. |
 | `Altitude` | `Duckiedrone_Altitude` | `~/altitude_node/altitude`, `~/pid_controller_node/desired/height` | Tilt-corrected altitude with desired-height overlay. |
-| `Time-of-Flight` | `SensorMsgs_Range` | `~/bottom_tof_driver_node/range` | Shared `ros` package renderer in numeric mode. |
+| `Time-of-Flight` | `Duckiedrone_TimeOfFlight` | `~/bottom_tof_driver_node/range`, `~/front_tof_driver_node/range`, `~/left_tof_driver_node/range`, `~/right_tof_driver_node/range`, `~/top_tof_driver_node/range` | Multi-sensor ToF plot for all five DD24 rangefinders. |
 | `IMU - Orientation` | `Duckiedrone_IMU_Orientation` | `/mavros/imu/data` | Roll/pitch/yaw plot plus PX4 calibration controls. |
 | `Camera` | `SensorMsgs_CompressedImage` | `~/camera_node/image/compressed` | Shared `ros` package renderer. |
 
