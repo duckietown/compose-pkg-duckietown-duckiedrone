@@ -58,7 +58,7 @@
             },
 			{
 				"shape": {
-					"rows": 2,
+					"rows": 3,
 					"cols": 8
 				},
 				"renderer": "Duckiedrone_Control",
