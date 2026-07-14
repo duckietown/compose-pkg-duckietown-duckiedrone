@@ -68,7 +68,7 @@ The `$id` is unique per widget instance; use it to namespace DOM ids and JS vari
 |---|---|---|
 | `Duckiedrone_Arming.php` | `Mavros_Arming` | ARM/DISARM toggle + flight-mode toggle (OFFBOARD/ALTITUDE) + kill switch + takeoff button. Talks to mavros services. |
 | `Duckiedrone_Altitude.php` | `Duckiedrone_Altitude` | Altitude plot for `/altitude_node/altitude` with a desired-height overlay and dynamic Y-axis scaling based on live samples. |
-| `Duckiedrone_Control.php` | `Duckiedrone_Control` | Virtual joystick publishing to `/mavros/manual_control/send`, reading `/mavros/state`, with optional legacy override params for older fly-commands mux setups. |
+| `Duckiedrone_Control.php` | `Duckiedrone_Control` | Virtual joystick plus full keyboard control publishing to `/mavros/manual_control/send`, reading `/mavros/state`, with optional legacy override params for older fly-commands mux setups. Keyboard: `w/a/s/d` = pitch/roll, arrows `↑↓` = throttle (two-stage ramp with a vertical thrust gauge), arrows `←→` = yaw, `space` = disarm. |
 | `Duckiedrone_Heartbeat.php` | `Duckiedrone_Heartbeat` | Single-topic heartbeat indicator. |
 | `Duckiedrone_Heartbeats_Monitor.php` | `Duckiedrone_Heartbeats_Monitor` | Multi-topic heartbeat grid for joystick / altitude / state_estimator / pid. |
 | `DuckietownMsgs_DroneMotorCommand.php` | `DuckietownMsgs_DroneMotorCommand` | Bar chart of the four motor PWM values. Reads legacy `flight_controller_node/motors` messages and falls back to `/mavros/rc/out` for PX4/MAVROS deployments. |
@@ -84,7 +84,7 @@ The default Duckiedrone mission currently renders these panels, in this order:
 | `Joystick Heartbeat` | `Duckiedrone_Heartbeat` | `~/joystick/heartbeat` | Robot-scoped heartbeat pulse. |
 | `Motors PWM` | `DuckietownMsgs_DroneMotorCommand` | `/mavros/rc/out` | Reads `mavros_msgs/RCOut` directly. |
 | `Heartbeats Monitor` | `Duckiedrone_Heartbeats_Monitor` | `~/joystick/heartbeat`, `~/altitude_node/heartbeat`, `~/state_estimator_node/heartbeat`, `~/pid_controller_node/heartbeat` | Aggregated liveness grid for the main companion nodes. |
-| `Remote Control` | `Duckiedrone_Control` | `/mavros/manual_control/send`, `/mavros/state` | Virtual joystick plus live command bars. |
+| `Remote Control` | `Duckiedrone_Control` | `/mavros/manual_control/send`, `/mavros/state` | Virtual joystick and keyboard control (WASD + arrows) plus live command bars and a thrust gauge. |
 | `Arm / Disarm` | `Mavros_Arming` | `/mavros/cmd/arming`, `/mavros/cmd/command`, `/mavros/set_mode`, `/mavros/state` | ARM/DISARM, flight mode, kill switch. |
 | `Altitude` | `Duckiedrone_Altitude` | `~/altitude_node/altitude`, `~/pid_controller_node/desired/height` | Tilt-corrected altitude with desired-height overlay. |
 | `Time-of-Flight` | `SensorMsgs_Range` | `~/bottom_tof_driver_node/range` | Shared `ros` package renderer in numeric mode. |
