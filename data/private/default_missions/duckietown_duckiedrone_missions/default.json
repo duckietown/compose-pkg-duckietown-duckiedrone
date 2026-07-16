@@ -116,17 +116,20 @@
             },
             {
                 "shape": {
-                    "rows": 1,
-                    "cols": 3
+                    "rows": 2,
+                    "cols": 5
                 },
-                "renderer": "SensorMsgs_Range",
+                "renderer": "Duckiedrone_TimeOfFlight",
                 "title": "Time-of-Flight",
-                "subtitle": "/bottom_tof_driver_node/range",
+                "subtitle": "/bottom_tof_driver_node/range, /front_tof_driver_node/range, /left_tof_driver_node/range, /right_tof_driver_node/range, /top_tof_driver_node/range",
                 "args": {
                     "ros_hostname": "",
-                    "topic": "~/bottom_tof_driver_node/range",
-                    "fps": 5,
-                    "rendering": "number"
+                    "topic_bottom": "~/bottom_tof_driver_node/range",
+                    "topic_front": "~/front_tof_driver_node/range",
+                    "topic_left": "~/left_tof_driver_node/range",
+                    "topic_right": "~/right_tof_driver_node/range",
+                    "topic_top": "~/top_tof_driver_node/range",
+                    "fps": 5
                 }
             },
             {
