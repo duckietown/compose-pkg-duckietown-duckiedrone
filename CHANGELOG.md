@@ -1,3 +1,18 @@
+## 2.2.6 (July 16, 2026)
+  - feat: implement multi-sensor Time-of-Flight renderer and update mission configuration
+  - Merge pull request #13 from duckietown/copilot/dtsw-8068-add-stabilized-mode-and-dependent-assets
+  - chore: address renderer review follow-ups
+  - fix: trim renderer topic configuration in php
+  - fix: resolve master merge conflicts
+  - fix: add resize observer for control rendering and fix stale comments
+  - refactor the Joystick UI for stabilized mode
+  - add stabilized mode
+  - fix(dashboard): clear legacy control canvas redraws
+  - fix(dashboard): preserve legacy joystick controls
+  - Initial plan
+  - refactor the Joystick UI for stabilized mode
+  - add stabilized mode
+
 ## 2.2.4 (July 10, 2026)
   - Merge pull request #11 from duckietown/DTSW-7986-Update-Dashboard
   - feat(dashboard): add Altitude and Motors PWM widgets to the dashboard
