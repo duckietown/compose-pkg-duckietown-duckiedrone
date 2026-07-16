@@ -1,3 +1,10 @@
+## 2.2.6 (July 16, 2026)
+  - Merge pull request #14 from duckietown/DTSW-8123-Update-Time-of-Flight-Dashboard-panel
+  - feat: enhance keyboard control with max throttle setting and tooltips
+  - fix: adjust default hover threshold
+  - feat: add keyboard control for thrust and yaw
+  - feat: implement multi-sensor Time-of-Flight renderer and update mission configuration
+
 ## 2.2.5 (July 13, 2026)
   - chore: address renderer review follow-ups
   - fix: trim renderer topic configuration in php
