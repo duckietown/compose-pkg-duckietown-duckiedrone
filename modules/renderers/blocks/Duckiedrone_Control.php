@@ -125,17 +125,17 @@ class Duckiedrone_Control extends BlockRenderer {
                     <div style="margin-top: 3px"
                          data-toggle="tooltip" data-placement="top"
                          title="The throttle where the drone lifts off. Below it throttle rises fast, above it rises slowly for fine control. Blue line on the gauge.">
-                        <label for="drone_control_commands_hover_threshold" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Hover</label>
+                        <label for="drone_control_commands_hover_threshold" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Hover %</label>
                         <input type="number" id="drone_control_commands_hover_threshold"
-                               min="0" max="1000" step="1"
+                               min="0" max="100" step="1"
                                style="width: 56px; font-size: 13px; padding: 1px 3px">
                     </div>
                     <div style="margin-top: 5px"
                          data-toggle="tooltip" data-placement="top"
                          title="The most throttle allowed. The drone never goes above this, whatever the keyboard or joystick asks for. Red line on the gauge.">
-                        <label for="drone_control_commands_max_throttle" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Thrust Cap</label>
+                        <label for="drone_control_commands_max_throttle" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Thrust Cap %</label>
                         <input type="number" id="drone_control_commands_max_throttle"
-                               min="0" max="1000" step="1"
+                               min="0" max="100" step="1"
                                style="width: 56px; font-size: 13px; padding: 1px 3px">
                     </div>
                 </td>
@@ -237,7 +237,7 @@ class Duckiedrone_Control extends BlockRenderer {
             const CONST_THROTTLE_STEP_COARSE = 25;       // throttle units (z, [0,1000]) added per tick below the hover threshold
             const CONST_THROTTLE_STEP_FINE = 10;         // throttle units per tick at/above the hover threshold (fine hover trim)
             const CONST_DEFAULT_HOVER_THRESHOLD = 100;   // conservatively low until the user calibrates their own value below
-            const CONST_DEFAULT_MAX_THROTTLE = 500;      // hard ceiling on thrust; command can never exceed this (z, [0,1000])
+            const CONST_DEFAULT_MAX_THROTTLE = 400;      // hard ceiling on thrust (z, [0,1000]); shown to the user as 40%
             
             function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color) {
                 //variables to be used when creating the arrow
@@ -490,27 +490,35 @@ class Duckiedrone_Control extends BlockRenderer {
                 // it in so the coarse->fine ramp switchover and the gauge line match their
                 // airframe.
                 const hover_threshold_storage_key = 'drone_control_hover_threshold_<?php echo $id ?>';
+                // Stored/used internally as a z value in [0,1000]; shown and entered as a
+                // percentage of full thrust (0-100%). % <-> z: z = pct * 10.
                 let hover_threshold = load_setting(hover_threshold_storage_key, CONST_DEFAULT_HOVER_THRESHOLD);
                 let hover_threshold_input = $('#<?php echo $id ?> #drone_control_commands_hover_threshold');
-                hover_threshold_input.val(hover_threshold);
+                hover_threshold_input.val(Math.round(hover_threshold / 10));
                 hover_threshold_input.on('change', function () {
-                    let entered = Math.max(0, Math.min(1000, Number($(this).val()) || CONST_DEFAULT_HOVER_THRESHOLD));
-                    hover_threshold = entered;
-                    $(this).val(entered);
-                    save_setting(hover_threshold_storage_key, entered);
+                    let raw = Number($(this).val());
+                    let pct = isNaN(raw) ? CONST_DEFAULT_HOVER_THRESHOLD / 10 : Math.max(0, Math.min(100, raw));
+                    pct = Math.round(pct);
+                    hover_threshold = pct * 10;
+                    $(this).val(pct);
+                    save_setting(hover_threshold_storage_key, hover_threshold);
                 });
 
                 // Max throttle: hard ceiling on the z command. Thrust can never be commanded
                 // above this, whatever the keyboard ramp or joystick asks for.
                 const max_throttle_storage_key = 'drone_control_max_throttle_<?php echo $id ?>';
+                // Same convention as the hover threshold: internal z in [0,1000], shown and
+                // entered as a percentage of full thrust (0-100%).
                 let max_throttle = load_setting(max_throttle_storage_key, CONST_DEFAULT_MAX_THROTTLE);
                 let max_throttle_input = $('#<?php echo $id ?> #drone_control_commands_max_throttle');
-                max_throttle_input.val(max_throttle);
+                max_throttle_input.val(Math.round(max_throttle / 10));
                 max_throttle_input.on('change', function () {
-                    let entered = Math.max(0, Math.min(1000, Number($(this).val()) || CONST_DEFAULT_MAX_THROTTLE));
-                    max_throttle = entered;
-                    $(this).val(entered);
-                    save_setting(max_throttle_storage_key, entered);
+                    let raw = Number($(this).val());
+                    let pct = isNaN(raw) ? CONST_DEFAULT_MAX_THROTTLE / 10 : Math.max(0, Math.min(100, raw));
+                    pct = Math.round(pct);
+                    max_throttle = pct * 10;
+                    $(this).val(pct);
+                    save_setting(max_throttle_storage_key, max_throttle);
                 });
 
                 // Native title tooltips always work; upgrade to Bootstrap tooltips when the
