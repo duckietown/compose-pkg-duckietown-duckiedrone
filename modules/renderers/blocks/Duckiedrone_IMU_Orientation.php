@@ -216,9 +216,19 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                         message.orientation.z,
                     ];
                     let rpy = eulerFromQuaternion(q, "XYZ");
-                    config.data.datasets[0].data.push(rpy[0] * (180/Math.PI));
-                    config.data.datasets[1].data.push(rpy[1] * (180/Math.PI));
-                    config.data.datasets[2].data.push(rpy[2] * (180/Math.PI));
+                    // MAVROS reports orientation in ENU world / FLU body; the PX4 flight
+                    // controller reports attitude in NED world / FRD body. Convert so this
+                    // panel matches the FC convention (same mapping used for the PID LX):
+                    //   roll_NED  =  roll_ENU
+                    //   pitch_NED = -pitch_ENU
+                    //   yaw_NED   =  90deg - yaw_ENU   (then wrapped to [-180, 180])
+                    let roll = rpy[0] * (180/Math.PI);
+                    let pitch = -rpy[1] * (180/Math.PI);
+                    let yaw = 90 - rpy[2] * (180/Math.PI);
+                    yaw = ((yaw + 180) % 360 + 360) % 360 - 180;
+                    config.data.datasets[0].data.push(roll);
+                    config.data.datasets[1].data.push(pitch);
+                    config.data.datasets[2].data.push(yaw);
                     chart.update();
                 });
             });
