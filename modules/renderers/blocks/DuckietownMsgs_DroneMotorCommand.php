@@ -89,25 +89,25 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
                             backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.red,
                             fill: true,
-                            data: new Array(time_horizon_secs).fill(<?php echo $args["min_value"] ?>)
+                            data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Motor 2',
                             backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.blue,
                             fill: true,
-                            data: new Array(time_horizon_secs).fill(<?php echo $args["min_value"] ?>)
+                            data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Motor 3',
                             backgroundColor: color(window.chartColors.green).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.green,
                             fill: true,
-                            data: new Array(time_horizon_secs).fill(<?php echo $args["min_value"] ?>)
+                            data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Motor 4',
                             backgroundColor: color(window.chartColors.purple).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.purple,
                             fill: true,
-                            data: new Array(time_horizon_secs).fill(<?php echo $args["min_value"] ?>)
+                            data: new Array(time_horizon_secs).fill(0)
                         }]
                     },
                     options: {
