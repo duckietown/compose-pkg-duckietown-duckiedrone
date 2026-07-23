@@ -30,6 +30,12 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
             "mandatory" => True,
             "default" => "~/px4_calibration/calibrate_gyro"
         ],
+        "level_service" => [
+            "name" => "PX4 level-horizon calibration service",
+            "type" => "text",
+            "mandatory" => True,
+            "default" => "~/px4_calibration/calibrate_level"
+        ],
         "status_topic" => [
             "name" => "PX4 calibration status topic",
             "type" => "text",
@@ -51,6 +57,10 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                 <i class="fa fa-crosshairs" aria-hidden="true"></i>
                 GYRO
             </button>
+            <button type="button" class="btn btn-info btn-sm" id="px4_calibrate_level">
+                <i class="fa fa-balance-scale" aria-hidden="true"></i>
+                LEVEL
+            </button>
         </div>
         <div id="px4_calibration_status" class="duckiedrone-imu-status">PX4 calibration idle</div>
         <canvas class="resizable duckiedrone-imu-chart"></canvas>
@@ -66,6 +76,7 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
             $(document).on("<?php echo $connected_evt ?>", function (evt) {
                 let status_box = $("#<?php echo $id ?> #px4_calibration_status");
                 let gyro_btn = $("#<?php echo $id ?> #px4_calibrate_gyro");
+                let level_btn = $("#<?php echo $id ?> #px4_calibrate_level");
 
                 function normalize_ros_name(name) {
                     return name.replace(/^~\/+/, '/').replace(/^\/+/, '/');
@@ -84,6 +95,11 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                     name: normalize_ros_name('<?php echo $args['gyro_service'] ?>'),
                     serviceType: 'std_srvs/srv/Trigger'
                 });
+                let level_srv = new ROSLIB.Service({
+                    ros: window.ros['<?php echo $ros_hostname ?>'],
+                    name: normalize_ros_name('<?php echo $args['level_service'] ?>'),
+                    serviceType: 'std_srvs/srv/Trigger'
+                });
                 let status_topic = new ROSLIB.Topic({
                     ros: window.ros['<?php echo $ros_hostname ?>'],
                     name: normalize_ros_name('<?php echo $args['status_topic'] ?>'),
@@ -93,6 +109,7 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
 
                 function set_busy(busy) {
                     gyro_btn.prop('disabled', busy);
+                    level_btn.prop('disabled', busy);
                 }
 
                 function set_status(text, class_name) {
@@ -119,6 +136,9 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
 
                 gyro_btn.off().click(function () {
                     call_calibration(gyro_srv, 'gyro');
+                });
+                level_btn.off().click(function () {
+                    call_calibration(level_srv, 'level');
                 });
                 status_topic.subscribe(function (message) {
                     set_status(message.data);
