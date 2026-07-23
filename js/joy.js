@@ -123,19 +123,9 @@ var JoyStick = (function(container, parameters, callback)
     var movedX = centerX + ((Math.max(-100, Math.min(100, initialX)) / 100) * maxMoveStick);
     var movedY = centerY - ((Math.max(-100, Math.min(100, initialY)) / 100) * maxMoveStick);
 
-    // Check if the device support the touch or not
-    if("ontouchstart" in document.documentElement)
-    {
-        canvas.addEventListener("touchstart", onTouchStart, false);
-        document.addEventListener("touchmove", onTouchMove, false);
-        document.addEventListener("touchend", onTouchEnd, false);
-    }
-    else
-    {
-        canvas.addEventListener("mousedown", onMouseDown, false);
-        document.addEventListener("mousemove", onMouseMove, false);
-        document.addEventListener("mouseup", onMouseUp, false);
-    }
+    // Pointer/touch control disabled — the drone is driven from the keyboard only.
+    // The stick still renders and reflects programmatic state, but does not accept
+    // mouse or touch input.
     // Draw the object
     drawExternal();
     drawInternal();
