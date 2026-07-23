@@ -233,7 +233,10 @@ class Duckiedrone_Control extends BlockRenderer {
             const CONST_MAX_ROLL_PITCH = <?php echo $args['max_roll_pitch'] ?? self::$ARGUMENTS['max_roll_pitch']['default'] ?>;
 
             // Keyboard yaw/throttle (arrow keys). Tune per airframe.
-            const CONST_YAW_KEY_VALUE = 60;              // joystick-X magnitude while a yaw key is held (> deadband)
+            // joystick-X magnitude while a yaw key is held. Chosen so the resulting yaw
+            // command (map_to_real: yaw = x * 10) equals the roll/pitch command magnitude
+            // (CONST_MAX_ROLL_PITCH), keeping the yaw rate matched to the roll/pitch rate.
+            const CONST_YAW_KEY_VALUE = CONST_MAX_ROLL_PITCH / 10;
             const CONST_THROTTLE_STEP_COARSE = 25;       // throttle units (z, [0,1000]) added per tick below the hover threshold
             const CONST_THROTTLE_STEP_FINE = 10;         // throttle units per tick at/above the hover threshold (fine hover trim)
             const CONST_DEFAULT_HOVER_THRESHOLD = 100;   // conservatively low until the user calibrates their own value below
