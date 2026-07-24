@@ -144,7 +144,7 @@
                     "ros_hostname": "",
                     "topic": "/mavros/imu/data",
                     "gyro_service": "/px4_calibration/calibrate_gyro",
-                    "accel_service": "/px4_calibration/calibrate_accel",
+                    "level_service": "/px4_calibration/calibrate_level",
                     "status_topic": "/px4_calibration/status",
                     "fps": 5
                 }
