@@ -127,9 +127,11 @@ class Mavros_Arming extends BlockRenderer {
                 <div class="btn-group-vertical btn-group-xs" role="group" id="drone_mode_selector">
                     <button type="button" class="btn btn-default" data-mode="STABILIZED"
                             title="PX4 STABILIZED — manual attitude control that self-levels; needs no GPS or altitude estimate. Use this for manual flight.">STABILIZED</button>
-                    <button type="button" class="btn btn-default" data-mode="AUTO.LOITER"
+                    <!-- LOITER / ALTITUDE hidden for now (not in current LX scope); kept in
+                         the DOM + JS wiring below so they can be re-enabled later. -->
+                    <button type="button" class="btn btn-default" data-mode="AUTO.LOITER" style="display: none"
                             title="PX4 AUTO.LOITER — position/altitude hold, safe armable default">LOITER</button>
-                    <button type="button" class="btn btn-default" data-mode="ALTCTL"
+                    <button type="button" class="btn btn-default" data-mode="ALTCTL" style="display: none"
                             title="PX4 ALTCTL — manual stick with altitude hold">ALTITUDE</button>
                     <button type="button" class="btn btn-default" data-mode="OFFBOARD"
                             title="PX4 OFFBOARD — external setpoints">OFFBOARD</button>
