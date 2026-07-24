@@ -140,12 +140,12 @@ class Duckiedrone_Control extends BlockRenderer {
                     </div>
                 </td>
                 <td rowspan="5" class="col-md-2 text-center" style="padding: 0; vertical-align: middle">
-                    <canvas id="drone_control_commands_joy_keys" width="150px" height="134px"></canvas>
-                    <div style="font-size: 13px; color: #555">Roll / Pitch</div>
+                    <div style="font-weight: bold; color: #555">Roll / Pitch</div>
+                    <canvas id="drone_control_commands_joy_keys" width="120px" height="120px"></canvas>
                 </td>
                 <td rowspan="5" class="col-md-2 text-center" style="padding: 0; vertical-align: middle">
+                    <div style="font-weight: bold; color: #555">Yaw / Throttle</div>
                     <div id="drone_control_commands_joy_stick" style="width:120px;height:120px;margin:0 auto;"></div>
-                    <div style="font-size: 13px; color: #555">Yaw / Throttle</div>
                 </td>
             </tr>
             <?php
@@ -732,9 +732,13 @@ class Duckiedrone_Control extends BlockRenderer {
                         left: [45, 50, 10, 50],
                         right: [55, 50, 90, 50],
                     };
-                    let scale = 1.2;
-                    let offsetX = 20;
-                    let offsetY = 20;
+                    // Canvas is 120x120. The arrows span base coords 10..90 (center 50);
+                    // scale 1.0 + offset 10 maps that to pixels 20..100, centered on 60,
+                    // leaving ~8px on every edge once the 20px stroke and arrowhead spread
+                    // are included, so no arrow clips.
+                    let scale = 1.0;
+                    let offsetX = 10;
+                    let offsetY = 10;
                     
                     for (let k in pos) {
                         pos[k] = pos[k].map(x => x * scale);
