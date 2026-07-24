@@ -121,8 +121,7 @@ class Duckiedrone_Control extends BlockRenderer {
                     Intensity
                 </td>
                 <td rowspan="5" class="col-md-1 text-center" style="padding: 0; vertical-align: middle">
-                    <canvas id="drone_control_commands_throttle_gauge" width="56px" height="110px"></canvas>
-                    <div style="margin-top: 3px"
+                    <div style="margin-bottom: 3px"
                          data-toggle="tooltip" data-placement="top"
                          title="The throttle where the drone lifts off. Below it throttle rises fast, above it rises slowly for fine control. Blue line on the gauge.">
                         <label for="drone_control_commands_hover_threshold" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Hover %</label>
@@ -130,7 +129,7 @@ class Duckiedrone_Control extends BlockRenderer {
                                min="0" max="100" step="1"
                                style="width: 56px; font-size: 13px; padding: 1px 3px">
                     </div>
-                    <div style="margin-top: 5px"
+                    <div style="margin-bottom: 5px"
                          data-toggle="tooltip" data-placement="top"
                          title="The most throttle allowed. The drone never goes above this, whatever the keyboard or joystick asks for. Red line on the gauge.">
                         <label for="drone_control_commands_max_throttle" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Thrust Cap %</label>
@@ -138,6 +137,7 @@ class Duckiedrone_Control extends BlockRenderer {
                                min="0" max="100" step="1"
                                style="width: 56px; font-size: 13px; padding: 1px 3px">
                     </div>
+                    <canvas id="drone_control_commands_throttle_gauge" width="56px" height="110px"></canvas>
                 </td>
                 <td rowspan="5" class="col-md-2 text-center" style="padding: 0; vertical-align: middle">
                     <div style="font-weight: bold; color: #555">Roll / Pitch</div>
