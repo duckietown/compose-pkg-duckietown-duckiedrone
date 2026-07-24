@@ -477,7 +477,11 @@ class Duckiedrone_Control extends BlockRenderer {
                 // manual_control publish loop would die and the drone could not arm.
                 function load_setting(key, fallback) {
                     try {
-                        return Number(localStorage.getItem(key)) || fallback;
+                        // Avoid `Number(...) || fallback`: it drops a valid stored 0.
+                        let raw = localStorage.getItem(key);
+                        if (raw === null || raw === '') return fallback;
+                        let value = Number(raw);
+                        return isNaN(value) ? fallback : value;
                     } catch (e) {
                         return fallback;
                     }
