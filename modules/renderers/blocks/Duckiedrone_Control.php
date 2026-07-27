@@ -471,7 +471,7 @@ class Duckiedrone_Control extends BlockRenderer {
 
                 let armed = false;
 
-                // Settings persist per widget instance across page reloads. localStorage can
+                // Settings persist per ROSbridge host across page reloads. localStorage can
                 // throw (private browsing, sandboxed iframe, storage disabled), so both calls
                 // are wrapped: a storage failure must never stop the setup below, or the
                 // manual_control publish loop would die and the drone could not arm.
@@ -496,7 +496,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 // Users find it by ramping throttle up and reading the gauge/bar, then typing
                 // it in so the coarse->fine ramp switchover and the gauge line match their
                 // airframe.
-                const hover_threshold_storage_key = 'drone_control_hover_threshold_<?php echo $id ?>';
+                const hover_threshold_storage_key = 'drone_control_hover_threshold_<?php echo $ros_hostname ?>';
                 // Stored/used internally as a z value in [0,1000]; shown and entered as a
                 // percentage of full thrust (0-100%). % <-> z: z = pct * 10.
                 let hover_threshold = load_setting(hover_threshold_storage_key, CONST_DEFAULT_HOVER_THRESHOLD);
@@ -513,7 +513,7 @@ class Duckiedrone_Control extends BlockRenderer {
 
                 // Max throttle: hard ceiling on the z command. Thrust can never be commanded
                 // above this, whatever the keyboard ramp or joystick asks for.
-                const max_throttle_storage_key = 'drone_control_max_throttle_<?php echo $id ?>';
+                const max_throttle_storage_key = 'drone_control_max_throttle_<?php echo $ros_hostname ?>';
                 // Same convention as the hover threshold: internal z in [0,1000], shown and
                 // entered as a percentage of full thrust (0-100%).
                 let max_throttle = load_setting(max_throttle_storage_key, CONST_DEFAULT_MAX_THROTTLE);
