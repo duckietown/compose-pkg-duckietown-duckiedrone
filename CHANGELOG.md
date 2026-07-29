@@ -1,3 +1,28 @@
+## 2.2.7 (July 29, 2026)
+  - refactor: update localStorage keys to use ros_hostname for persistence
+  - refactor: enhance load_setting function to handle valid stored zero values
+  - refactor: update calibration service from accel to level in default mission configuration
+  - refactor: hide LOITER and ALTITUDE mode buttons in the UI for future re-enablement
+  - refactor: adjust layout of throttle and thrust cap controls in UI
+  - refactor: improve UI layout and styling for control commands display
+  - refactor: update IMU orientation conversion logic
+  - refactor: adjust yaw key value calculation to match roll/pitch command magnitude
+  - feat: add level calibration service and button to IMU orientation
+  - refactor: update hover and max throttle inputs to use percentage values
+  - refactor: update motor data initialization to use zero values
+  - refactor: disable touch control for joystick, keyboard input only
+  - refactor: remove accel calibration service and related UI elements
+  - refactor: remove takeoff functionality and clean up related code
+  - Bump version to 2.2.6.
+  - Merge pull request #14 from duckietown/DTSW-8123-Update-Time-of-Flight-Dashboard-panel
+  - feat: enhance keyboard control with max throttle setting and tooltips
+  - feat: implement multi-sensor Time-of-Flight renderer and update mission configuration
+  - fix: adjust default hover threshold
+  - feat: add keyboard control for thrust and yaw
+  - Bump version to 2.2.5.
+  - Bump version to 2.2.6.
+  - feat: implement multi-sensor Time-of-Flight renderer and update mission configuration
+
 ## 2.2.6 (July 16, 2026)
   - Merge pull request #14 from duckietown/DTSW-8123-Update-Time-of-Flight-Dashboard-panel
   - feat: enhance keyboard control with max throttle setting and tooltips
