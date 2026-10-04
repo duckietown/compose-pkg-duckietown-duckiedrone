@@ -432,13 +432,18 @@
 
 .drone-chart-wrap {
     position: absolute;
-    top: 40px; /* matches MissionControl $header_h */
+    /* Fill the card body. Offset only when a block header row is present. */
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     box-sizing: border-box;
     padding: var(--drone-pad);
     overflow: hidden;
+}
+
+.mission-control-item:has(tr.block_renderer_header) .drone-chart-wrap {
+    top: 40px; /* matches MissionControl $header_h when show_header is on */
 }
 
 .block_renderer_canvas .block_renderer_container .drone-chart-wrap canvas.drone-chart,
@@ -455,7 +460,7 @@
 
 .drone-imu {
     position: absolute;
-    top: 40px;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
@@ -466,6 +471,10 @@
     padding: var(--drone-pad);
     gap: var(--drone-gap-sm);
     overflow: hidden;
+}
+
+.mission-control-item:has(tr.block_renderer_header) .drone-imu {
+    top: 40px;
 }
 
 .drone-imu-bar {

@@ -5,8 +5,7 @@
 			"owner": null,
 			"grant": [],
 			"guest": [
-				"r",
-				"w"
+				"r"
 			]
 		}
 	},
