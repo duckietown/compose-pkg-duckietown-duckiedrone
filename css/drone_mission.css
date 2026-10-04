@@ -520,6 +520,9 @@
     line-height: 1.3;
 }
 
+/* Nested IMU chart must not inherit the card-header top:40px offset —
+   .drone-imu itself is already offset below the header. */
+.mission-control-item:has(tr.block_renderer_header) .drone-imu .drone-chart-wrap,
 .drone-imu .drone-chart-wrap {
     position: relative;
     top: auto;
