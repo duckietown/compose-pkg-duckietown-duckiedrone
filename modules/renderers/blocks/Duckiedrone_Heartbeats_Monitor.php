@@ -106,41 +106,34 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
         "background_color" => [
             "name" => "Background color",
             "type" => "color",
-            "mandatory" => True,
-            "default" => "#fff"
+            "mandatory" => False,
+            "default" => ""
         ]
     ];
     
     protected static function render($id, &$args) {
+        // Only apply an explicit custom color. Transparent / white / empty
+        // must not override the shared white .mission-control-item card.
+        $bg = trim((string) ($args['background_color'] ?? ''));
+        $bg_l = strtolower($bg);
+        if ($bg_l === '' || $bg_l === 'transparent' || $bg_l === '#fff' || $bg_l === '#ffffff' || $bg_l === 'white') {
+            $bg = '';
+        }
         ?>
-        <div id="block_content">
-            <table class="resizable" style="height: 100%">
-                <tr style="font-size: 18pt;">
-                    <?php
-                    for ($i = 1; $i <= 4; $i++) {
-                        if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                            continue;
-                        ?>
-                        <td class="col-md-3 heartbeats-monitor-heart<?php echo $i ?>">
-                            <span id="heartbeats-monitor-heart<?php echo $i ?>" class="glyphicon glyphicon-heart" aria-hidden="true"></span>
-                        </td>
-                    <?php
-                    }
-                    ?>
-                </tr>
-                <tr style="font-family: monospace; font-size: 8pt"><?php
-                    for ($i = 1; $i <= 4; $i++) {
-                        if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
-                            continue;
-                        ?>
-                        <td class="col-md-3 heartbeats-monitor-heart<?php echo $i ?>">
-                            <?php echo $args["label{$i}"] ?>
-                        </td>
-                    <?php
-                    }
-                    ?>
-                </tr>
-            </table>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-hb resizable">
+            <?php
+            for ($i = 1; $i <= 4; $i++) {
+                if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
+                    continue;
+                ?>
+                <div class="drone-hb-item heartbeats-monitor-heart<?php echo $i ?>" id="heartbeats-monitor-heart<?php echo $i ?>-wrap">
+                    <span id="heartbeats-monitor-heart<?php echo $i ?>" class="glyphicon glyphicon-heart" aria-hidden="true"></span>
+                    <span class="drone-hb-label"><?php echo htmlspecialchars($args["label{$i}"]) ?></span>
+                </div>
+            <?php
+            }
+            ?>
         </div>
         
         <?php
@@ -172,7 +165,7 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                         throttle_rate: <?php echo 1000 / $args['frequency'] ?>
                     })).subscribe(function (message) {
                         _heartbeats['<?php echo "heart{$i}" ?>'] = seconds_since_epoch();
-                        _heartbeat_turn_to_color("<?php echo "heart{$i}" ?>", "green");
+                        _heartbeat_set_state("<?php echo "heart{$i}" ?>", "ok");
                     });
                     <?php if (strlen($override_name) > 0) { ?>
                     let <?php echo "heart{$i}" ?> = new ROSLIB.Param({
@@ -192,19 +185,24 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                 }
                 ?>
                 
-                function _heartbeat_turn_to_color(label, color){
-                    $("#<?php echo $id ?> .heartbeats-monitor-{0}".format(label)).css("color", color);
+                function _heartbeat_set_state(label, state) {
+                    let $item = $("#<?php echo $id ?> .heartbeats-monitor-" + label);
+                    $item.removeClass("is-ok is-stale is-warn is-bad");
+                    if (state === "ok") $item.addClass("is-ok");
+                    else if (state === "warn") $item.addClass("is-warn");
+                    else if (state === "bad") $item.addClass("is-bad");
+                    else $item.addClass("is-stale");
                 }
                 
                 function _update_heartbeats_monitor(){
                     for (let heart in _heartbeats) {
                         let t = _heartbeats[heart];
                         if (seconds_since_epoch() - t > <?php echo $args["threshold"] ?>) {
-                            let color = "black";
+                            let state = "stale";
                             if (heart in _heartbeats_override) {
-                                color = (_heartbeats_override[heart])? "darkred" : "goldenrod";
+                                state = (_heartbeats_override[heart]) ? "bad" : "warn";
                             }
-                            _heartbeat_turn_to_color(heart, color);
+                            _heartbeat_set_state(heart, state);
                         }
                     }
                 }
@@ -217,15 +215,13 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
         ROS::connect($ros_hostname);
         ?>
 
+        <?php if ($bg !== '') { ?>
         <style type="text/css">
             #<?php echo $id ?>{
-                background-color: <?php echo $args['background_color'] ?>;
-            }
-            
-            #<?php echo $id ?> .glyphicon{
-                margin-bottom: 8px;
+                background-color: <?php echo htmlspecialchars($bg) ?>;
             }
         </style>
+        <?php } ?>
         <?php
     }//render
     

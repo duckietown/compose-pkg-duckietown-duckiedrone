@@ -88,8 +88,8 @@ class Duckiedrone_Control extends BlockRenderer {
         "background_color" => [
             "name" => "Background color",
             "type" => "color",
-            "mandatory" => True,
-            "default" => "#fff"
+            "mandatory" => False,
+            "default" => ""
         ]
     ];
     
@@ -108,79 +108,46 @@ class Duckiedrone_Control extends BlockRenderer {
         }
         $arming_service = $args['arming_service'] ?? self::$ARGUMENTS['arming_service']['default'];
         $legacy_set_mode_service = trim($args['service_set_mode'] ?? '');
+        // Only apply an explicit custom color. Transparent / white / empty
+        // must not override the shared white .mission-control-item card.
+        $bg = trim((string) ($args['background_color'] ?? ''));
+        $bg_l = strtolower($bg);
+        if ($bg_l === '' || $bg_l === 'transparent' || $bg_l === '#fff' || $bg_l === '#ffffff' || $bg_l === 'white') {
+            $bg = '';
+        }
         ?>
-        <table class="resizable" style="height: 100%">
-            <tr style="height: 20px; font-weight: bold">
-                <td class="col-md-1">
-                    Channel
-                </td>
-                <td class="col-md-1 text-center">
-                    Override
-                </td>
-                <td class="col-md-4 text-left">
-                    Intensity
-                </td>
-                <td rowspan="5" class="col-md-1 text-center" style="padding: 0; vertical-align: middle">
-                    <div style="margin-bottom: 3px"
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-rc resizable">
+            <div class="drone-rc-channels">
+                <?php
+                $bars = [
+                    [
+                        "id" => "roll",
+                        "label" => "Roll",
+                        "tooltip" => "Tilt left or right. Keys A and D."
+                    ],
+                    [
+                        "id" => "pitch",
+                        "label" => "Pitch",
+                        "tooltip" => "Tilt forward or back. Keys W and S."
+                    ],
+                    [
+                        "id" => "yaw",
+                        "label" => "Yaw",
+                        "tooltip" => "Turn left or right. Left and right arrow keys."
+                    ],
+                    [
+                        "id" => "throttle",
+                        "label" => "Throttle",
+                        "tooltip" => "More or less thrust. Up and down arrow keys. Stays where it is left."
+                    ],
+                ];
+                foreach ($bars as $bar) {
+                    ?>
+                    <div class="drone-rc-row"
                          data-toggle="tooltip" data-placement="top"
-                         title="The throttle where the drone lifts off. Below it throttle rises fast, above it rises slowly for fine control. Blue line on the gauge.">
-                        <label for="drone_control_commands_hover_threshold" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Hover %</label>
-                        <input type="number" id="drone_control_commands_hover_threshold"
-                               min="0" max="100" step="1"
-                               style="width: 56px; font-size: 13px; padding: 1px 3px">
-                    </div>
-                    <div style="margin-bottom: 5px"
-                         data-toggle="tooltip" data-placement="top"
-                         title="The most throttle allowed. The drone never goes above this, whatever the keyboard or joystick asks for. Red line on the gauge.">
-                        <label for="drone_control_commands_max_throttle" style="display: block; font-size: 12px; margin: 0 0 1px; font-weight: normal">Thrust Cap %</label>
-                        <input type="number" id="drone_control_commands_max_throttle"
-                               min="0" max="100" step="1"
-                               style="width: 56px; font-size: 13px; padding: 1px 3px">
-                    </div>
-                    <canvas id="drone_control_commands_throttle_gauge" width="56px" height="110px"></canvas>
-                </td>
-                <td rowspan="5" class="col-md-2 text-center" style="padding: 0; vertical-align: middle">
-                    <div style="font-weight: bold; color: #555">Roll / Pitch</div>
-                    <canvas id="drone_control_commands_joy_keys" width="120px" height="120px"></canvas>
-                </td>
-                <td rowspan="5" class="col-md-2 text-center" style="padding: 0; vertical-align: middle">
-                    <div style="font-weight: bold; color: #555">Yaw / Throttle</div>
-                    <div id="drone_control_commands_joy_stick" style="width:120px;height:120px;margin:0 auto;"></div>
-                </td>
-            </tr>
-            <?php
-            $bars = [
-                [
-                    "id" => "roll",
-                    "label" => "Roll",
-                    "tooltip" => "Tilt left or right. Keys A and D."
-                ],
-                [
-                    "id" => "pitch",
-                    "label" => "Pitch",
-                    "tooltip" => "Tilt forward or back. Keys W and S."
-                ],
-                [
-                    "id" => "yaw",
-                    "label" => "Yaw",
-                    "tooltip" => "Turn left or right. Left and right arrow keys."
-                ],
-                [
-                    "id" => "throttle",
-                    "label" => "Throttle",
-                    "tooltip" => "More or less thrust. Up and down arrow keys. Stays where it is left."
-                ],
-            ];
-            
-            foreach ($bars as &$bar) {
-                ?>
-                <tr style="height: 20px">
-                    <td class="col-md-1" style="text-align: right"
-                        data-toggle="tooltip" data-placement="top"
-                        title="<?php echo $bar["tooltip"] ?>">
-                        <p class="text-right" style="margin: 0"><?php echo $bar["label"] ?></p>
-                    </td>
-                    <td class="col-md-1">
+                         title="<?php echo htmlspecialchars($bar['tooltip']) ?>">
+                        <p class="drone-rc-label"><?php echo htmlspecialchars($bar['label']) ?></p>
                         <input type="checkbox"
                                data-toggle="toggle"
                                data-onstyle="primary"
@@ -188,35 +155,54 @@ class Duckiedrone_Control extends BlockRenderer {
                                data-class="fast"
                                data-size="mini"
                                <?php echo $override_disabled_attr ?>
-                               name="drone_control_commands_override_<?php echo $bar["id"] ?>"
-                               id="drone_control_commands_override_<?php echo $bar["id"] ?>">
-                    </td>
-                    <td class="col-md-6 text-left">
-                        <div class="progress" style="margin: 0; height: 16px">
-                            <div class="progress-bar progress-bar-primary" role="progressbar"
-                                 id="drone_control_commands_bar_<?php echo $bar["id"] ?>"
+                               name="drone_control_commands_override_<?php echo $bar['id'] ?>"
+                               id="drone_control_commands_override_<?php echo $bar['id'] ?>">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar"
+                                 id="drone_control_commands_bar_<?php echo $bar['id'] ?>"
                                  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
                                  style="width: 0">
                                 <span class="sr-only"></span>
                             </div>
                         </div>
-                    </td>
-                </tr>
-                <?php
-            }
-            ?>
-            <tr>
-                <td colspan="6" style="padding: 2px 4px 0; border-top: 1px solid #eee">
-                    <div style="font-size: 14px; color: #666; text-align: center; line-height: 1.5">
-                        <b>A</b> / <b>D</b> = Roll (Roll Left / Right)
-                        &nbsp;&middot;&nbsp; <b>W</b> / <b>S</b> = Pitch (Pitch Forward / Back)
-                        &nbsp;&middot;&nbsp; <b>&larr;</b> / <b>&rarr;</b> = Yaw (Yaw Left / Right)
-                        &nbsp;&middot;&nbsp; <b>&uarr;</b> / <b>&darr;</b> = Throttle (More / Less)
-                        &nbsp;&middot;&nbsp; <b>Space</b> = Disarm
                     </div>
-                </td>
-            </tr>
-        </table>
+                    <?php
+                }
+                ?>
+            </div>
+            <div class="drone-rc-trim">
+                <div class="drone-rc-field"
+                     data-toggle="tooltip" data-placement="top"
+                     title="The throttle where the drone lifts off. Below it throttle rises fast, above it rises slowly for fine control. Blue line on the gauge.">
+                    <label for="drone_control_commands_hover_threshold">Hover %</label>
+                    <input type="number" id="drone_control_commands_hover_threshold"
+                           min="0" max="100" step="1">
+                </div>
+                <div class="drone-rc-field"
+                     data-toggle="tooltip" data-placement="top"
+                     title="The most throttle allowed. The drone never goes above this, whatever the keyboard or joystick asks for. Red line on the gauge.">
+                    <label for="drone_control_commands_max_throttle">Thrust Cap %</label>
+                    <input type="number" id="drone_control_commands_max_throttle"
+                           min="0" max="100" step="1">
+                </div>
+                <canvas id="drone_control_commands_throttle_gauge" width="56" height="110"></canvas>
+            </div>
+            <div class="drone-rc-pad">
+                <div class="drone-rc-pad-title">Roll / Pitch</div>
+                <canvas id="drone_control_commands_joy_keys" width="120" height="120"></canvas>
+            </div>
+            <div class="drone-rc-stick">
+                <div class="drone-rc-stick-title">Yaw / Throttle</div>
+                <div id="drone_control_commands_joy_stick" style="width:120px;height:120px;margin:0 auto;"></div>
+            </div>
+            <p class="drone-rc-hint">
+                <b>A</b> / <b>D</b> Roll
+                &nbsp;&middot;&nbsp; <b>W</b> / <b>S</b> Pitch
+                &nbsp;&middot;&nbsp; <b>&larr;</b> / <b>&rarr;</b> Yaw
+                &nbsp;&middot;&nbsp; <b>&uarr;</b> / <b>&darr;</b> Throttle
+                &nbsp;&middot;&nbsp; <b>Space</b> Disarm
+            </p>
+        </div>
         
         <!-- Include ROS -->
         <script src="<?php echo Core::getJSscriptURL('rosdb.js', 'ros') ?>"></script>
@@ -293,21 +279,29 @@ class Duckiedrone_Control extends BlockRenderer {
                 let x0 = (W - barW) / 2, y0 = pad, barH = H - pad * 2 - labelH;
                 gctx.clearRect(0, 0, W, H);
 
+                let styles = getComputedStyle(document.documentElement);
+                let ok = styles.getPropertyValue('--r-ok').trim() || '#047857';
+                let muted = styles.getPropertyValue('--r-muted').trim() || '#6b7280';
+                let text = styles.getPropertyValue('--r-text').trim() || '#1a1d26';
+                let fill = styles.getPropertyValue('--r-fill').trim() || '#2c5686';
+                let bad = styles.getPropertyValue('--r-bad').trim() || '#b91c1c';
+                let border = styles.getPropertyValue('--r-border-strong').trim() || '#c9ced8';
+
                 let frac = Math.max(0, Math.min(1, z / 1000));
                 let aboveThresh = z >= hover_threshold;
 
-                // filled portion: grey while grounded, green once airborne
+                // filled portion: muted while grounded, ok once airborne
                 let fillH = barH * frac;
-                gctx.fillStyle = aboveThresh ? '#28a745' : '#888';
+                gctx.fillStyle = aboveThresh ? ok : muted;
                 gctx.fillRect(x0, y0 + barH - fillH, barW, fillH);
 
                 // frame
-                gctx.strokeStyle = '#333';
+                gctx.strokeStyle = text;
                 gctx.lineWidth = 1;
                 gctx.strokeRect(x0, y0, barW, barH);
 
                 // tick marks every 25%
-                gctx.strokeStyle = '#bbb';
+                gctx.strokeStyle = border;
                 for (let f = 0.25; f < 1; f += 0.25) {
                     let ty = y0 + barH - barH * f;
                     gctx.beginPath();
@@ -316,18 +310,18 @@ class Duckiedrone_Control extends BlockRenderer {
                     gctx.stroke();
                 }
 
-                // hover_threshold marker line (blue)
+                // hover_threshold marker line (theme fill)
                 let thY = y0 + barH - barH * (hover_threshold / 1000);
-                gctx.strokeStyle = '#337ab7';
+                gctx.strokeStyle = fill;
                 gctx.lineWidth = 2;
                 gctx.beginPath();
                 gctx.moveTo(x0 - 3, thY);
                 gctx.lineTo(x0 + barW + 3, thY);
                 gctx.stroke();
 
-                // max_throttle ceiling line (red)
+                // max_throttle ceiling line (theme bad)
                 let ceilY = y0 + barH - barH * (max_throttle / 1000);
-                gctx.strokeStyle = '#d9534f';
+                gctx.strokeStyle = bad;
                 gctx.lineWidth = 2;
                 gctx.beginPath();
                 gctx.moveTo(x0 - 3, ceilY);
@@ -335,7 +329,7 @@ class Duckiedrone_Control extends BlockRenderer {
                 gctx.stroke();
 
                 // z as a percentage of full throttle
-                gctx.fillStyle = '#000';
+                gctx.fillStyle = text;
                 gctx.font = '13px monospace';
                 gctx.textAlign = 'center';
                 gctx.fillText(Math.round(frac * 100) + '%', W / 2, H - 2);
@@ -753,10 +747,13 @@ class Duckiedrone_Control extends BlockRenderer {
                     }
                     
                     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                    drawArrow(ctx, ...pos.up, line_width, front ? 'green' : 'gray');
-                    drawArrow(ctx, ...pos.down, line_width, back ? 'green' : 'gray');
-                    drawArrow(ctx, ...pos.left, line_width, left ? 'green' : 'gray');
-                    drawArrow(ctx, ...pos.right, line_width, right ? 'green' : 'gray');
+                    let _styles = getComputedStyle(document.documentElement);
+                    let _ok = _styles.getPropertyValue('--r-ok').trim() || '#047857';
+                    let _muted = _styles.getPropertyValue('--r-muted').trim() || '#6b7280';
+                    drawArrow(ctx, ...pos.up, line_width, front ? _ok : _muted);
+                    drawArrow(ctx, ...pos.down, line_width, back ? _ok : _muted);
+                    drawArrow(ctx, ...pos.left, line_width, left ? _ok : _muted);
+                    drawArrow(ctx, ...pos.right, line_width, right ? _ok : _muted);
                     
                     let joy_axes = map_to_real(front, back, left, right);
                     publish_joy_cmd(joy_axes, {});
@@ -772,11 +769,13 @@ class Duckiedrone_Control extends BlockRenderer {
         ROS::connect($ros_hostname);
         ?>
 
+        <?php if ($bg !== '') { ?>
         <style type="text/css">
             #<?php echo $id ?>{
-                background-color: <?php echo $args['background_color'] ?>;
+                background-color: <?php echo htmlspecialchars($bg) ?>;
             }
         </style>
+        <?php } ?>
         <?php
     }//render
     

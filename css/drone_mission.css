@@ -1,0 +1,536 @@
+/*
+ * Duckiedrone Mission Control widgets.
+ * Shared spacing scale (match modern design_system):
+ *   pad: 12px | gap: 10px | radius-sm: 6px | radius-md: 12px
+ * Do NOT set transparent on the block root (#id) — that overrides the
+ * white .mission-control-item card background.
+ */
+
+:root {
+    --drone-pad: 12px;
+    --drone-gap: 10px;
+    --drone-gap-sm: 6px;
+}
+
+.drone-rc,
+.drone-arm,
+.drone-hb,
+.drone-hb-pulse {
+    height: 100%;
+    box-sizing: border-box;
+    color: var(--r-text, #1a1d26);
+    font-size: var(--r-fs-md, 12px);
+    line-height: var(--r-lh, 1.4);
+    padding: var(--drone-pad);
+}
+
+/* ---- Remote Control ---- */
+.drone-rc {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) auto minmax(120px, 140px) minmax(120px, 140px);
+    grid-template-rows: 1fr auto;
+    gap: var(--drone-gap);
+    align-items: stretch;
+}
+
+.drone-rc-channels {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--drone-gap-sm);
+    min-width: 0;
+}
+
+.drone-rc-row {
+    display: grid;
+    grid-template-columns: 64px 54px minmax(0, 1fr);
+    gap: var(--drone-gap-sm) var(--drone-gap);
+    align-items: center;
+}
+
+.drone-rc-label {
+    margin: 0;
+    text-align: right;
+    font-size: var(--r-fs-sm, 11px);
+    font-weight: var(--r-fw-semibold, 600);
+    letter-spacing: var(--r-tracking-label, 0.04em);
+    text-transform: uppercase;
+    color: var(--r-muted, #6b7280);
+}
+
+.drone-rc .progress {
+    margin: 0;
+    height: 12px;
+    border-radius: var(--r-radius-pill, 999px);
+    background: var(--r-track, #e8ebf1);
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.drone-rc .progress-bar {
+    background-color: var(--r-fill, #2c5686);
+    box-shadow: none;
+}
+
+.drone-rc-trim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--drone-gap-sm);
+}
+
+.drone-rc-field {
+    width: 100%;
+    text-align: center;
+}
+
+.drone-rc-field label {
+    display: block;
+    margin: 0 0 2px;
+    font-size: var(--r-fs-xs, 10px);
+    font-weight: var(--r-fw-semibold, 600);
+    letter-spacing: var(--r-tracking-label, 0.04em);
+    text-transform: uppercase;
+    color: var(--r-muted, #6b7280);
+}
+
+.drone-rc-field input[type="number"] {
+    width: 56px;
+    padding: 4px 6px;
+    border: 1px solid var(--r-control-border, #8b929e);
+    border-radius: var(--r-radius-sm, 6px);
+    background: var(--r-surface, #f4f6fa);
+    color: var(--r-text, #1a1d26);
+    font-size: var(--r-fs-md, 12px);
+    text-align: center;
+}
+
+.drone-rc-pad,
+.drone-rc-stick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--drone-gap-sm);
+    min-width: 0;
+}
+
+.drone-rc-pad-title,
+.drone-rc-stick-title {
+    font-size: var(--r-fs-xs, 10px);
+    font-weight: var(--r-fw-semibold, 600);
+    color: var(--r-muted, #6b7280);
+    letter-spacing: var(--r-tracking-label, 0.04em);
+    text-transform: uppercase;
+}
+
+.drone-rc-hint {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding-top: var(--drone-gap-sm);
+    border-top: 1px solid var(--r-border, #dde1ea);
+    text-align: center;
+    font-size: var(--r-fs-sm, 11px);
+    color: var(--r-muted, #6b7280);
+}
+
+.drone-rc-hint b {
+    color: var(--r-text, #1a1d26);
+    font-weight: var(--r-fw-semibold, 600);
+}
+
+@media (max-width: 900px) {
+    .drone-rc {
+        grid-template-columns: 1fr 1fr;
+    }
+    .drone-rc-channels {
+        grid-column: 1 / -1;
+    }
+    .drone-rc-trim {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: center;
+        gap: var(--drone-gap);
+    }
+}
+
+/* ---- Arm / Disarm ---- */
+/* One aligned row: label → control (identical footprint) → status. */
+.drone-arm {
+    --drone-arm-h: 56px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--drone-gap);
+    row-gap: 0;
+    align-items: start;
+    justify-items: stretch;
+    align-content: center;
+}
+
+.drone-arm-col {
+    display: grid;
+    grid-template-rows: 14px var(--drone-arm-h) 14px;
+    gap: var(--drone-gap-sm);
+    align-items: center;
+    justify-items: stretch;
+    width: 100%;
+    min-width: 0;
+}
+
+.drone-arm-label {
+    margin: 0;
+    font-size: var(--r-fs-xs, 10px);
+    font-weight: var(--r-fw-semibold, 600);
+    letter-spacing: var(--r-tracking-label, 0.04em);
+    text-transform: uppercase;
+    color: var(--r-muted, #6b7280);
+    text-align: center;
+    line-height: 14px;
+    height: 14px;
+}
+
+.drone-arm-status {
+    margin: 0;
+    height: 14px;
+    font-size: var(--r-fs-xs, 10px);
+    color: var(--r-bad, #b91c1c);
+    text-align: center;
+    line-height: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+/* Shared control footprint — arming, modes, kill */
+.drone-arm-ctl {
+    width: 100%;
+    height: var(--drone-arm-h);
+    min-height: var(--drone-arm-h);
+    max-height: var(--drone-arm-h);
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--r-border, #dde1ea);
+    border-radius: var(--r-radius-sm, 6px);
+    background: var(--r-surface, #f4f6fa);
+    color: var(--r-text, #1a1d26);
+    font-size: var(--r-fs-sm, 11px);
+    font-weight: var(--r-fw-semibold, 600);
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.drone-arm-arming,
+.drone-arm-kill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.drone-arm-arming.is-armed {
+    background: var(--r-ok, #047857);
+    border-color: var(--r-ok, #047857);
+    color: #fff;
+}
+
+.drone-arm-modes {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.drone-arm-mode-btn {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0 6px;
+    border: 0;
+    border-bottom: 1px solid var(--r-border, #dde1ea);
+    border-radius: 0;
+    background: transparent;
+    color: var(--r-text, #1a1d26);
+    font-size: var(--r-fs-sm, 11px);
+    font-weight: var(--r-fw-semibold, 600);
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    cursor: pointer;
+    box-shadow: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.drone-arm-mode-btn:last-child {
+    border-bottom: 0;
+}
+
+.drone-arm-mode-btn.is-active {
+    background: var(--r-fill, #2c5686);
+    color: var(--r-on-fill, #fff);
+}
+
+.drone-arm-kill {
+    background: var(--r-bad, #b91c1c);
+    border-color: var(--r-bad, #b91c1c);
+    color: #fff;
+    letter-spacing: 0.04em;
+}
+
+.drone-arm-kill .fa {
+    margin: 0;
+    font-size: 12px;
+}
+
+.drone-arm-kill:hover,
+.drone-arm-kill:focus,
+.drone-arm-arming:hover,
+.drone-arm-arming:focus,
+.drone-arm-mode-btn:hover,
+.drone-arm-mode-btn:focus {
+    filter: brightness(1.05);
+    outline: none;
+}
+
+.drone-arm-kill:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+/* ---- Heartbeats strip ---- */
+.drone-hb {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--drone-gap);
+    align-items: stretch;
+}
+
+.drone-hb-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--drone-gap-sm);
+    padding: var(--drone-gap-sm) var(--drone-gap);
+    border: 1px solid var(--r-border, #dde1ea);
+    border-radius: var(--r-radius-sm, 6px);
+    background: var(--r-surface, #f4f6fa);
+    min-height: 0;
+    box-sizing: border-box;
+    transition: border-color var(--r-ease, 160ms ease), background var(--r-ease, 160ms ease);
+}
+
+.drone-hb-item .glyphicon {
+    font-size: 18px;
+    margin: 0;
+    color: var(--r-muted, #6b7280);
+}
+
+.drone-hb-item.is-ok {
+    border-color: var(--r-ok-border, #bbf7d0);
+    background: var(--r-ok-bg, #ecfdf3);
+}
+
+.drone-hb-item.is-ok .glyphicon,
+.drone-hb-item.is-ok .drone-hb-label {
+    color: var(--r-ok, #047857);
+}
+
+.drone-hb-item.is-stale .glyphicon,
+.drone-hb-item.is-stale .drone-hb-label {
+    color: var(--r-muted, #6b7280);
+}
+
+.drone-hb-item.is-warn {
+    border-color: var(--r-warn-border, #fde68a);
+    background: var(--r-warn-bg, #fffbeb);
+}
+
+.drone-hb-item.is-warn .glyphicon,
+.drone-hb-item.is-warn .drone-hb-label {
+    color: var(--r-warn, #b45309);
+}
+
+.drone-hb-item.is-bad {
+    border-color: var(--r-bad-border, #fecaca);
+    background: var(--r-bad-bg, #fef2f2);
+}
+
+.drone-hb-item.is-bad .glyphicon,
+.drone-hb-item.is-bad .drone-hb-label {
+    color: var(--r-bad, #b91c1c);
+}
+
+.drone-hb-label {
+    font-size: var(--r-fs-xs, 10px);
+    font-weight: var(--r-fw-semibold, 600);
+    letter-spacing: var(--r-tracking-label, 0.04em);
+    text-transform: uppercase;
+    color: var(--r-muted, #6b7280);
+    text-align: center;
+}
+
+/* ---- Joystick heartbeat pulse ---- */
+/* Default mission: 2-row block. Keep 12px inset so the gif never clips the card edge. */
+.drone-hb-pulse {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: var(--drone-pad) !important;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.drone-hb-pulse-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: hidden;
+}
+
+.drone-hb-pulse-card img {
+    display: block;
+    max-width: 100%;
+    max-height: 140px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.drone-hb-pulse-label {
+    display: none;
+}
+
+/* ---- Shared chart tiles (ToF / Altitude / Motors / IMU) ---- */
+/* Absolutely fill the card body under the 40px header. Table % heights
+   are unreliable and flex-on-<table> collapses the chart area. */
+.mission-control-item:has(.drone-chart-wrap),
+.mission-control-item:has(.drone-imu) {
+    position: relative;
+}
+
+.mission-control-item:has(.drone-chart-wrap) tr.block_renderer_container > td,
+.mission-control-item:has(.drone-imu) tr.block_renderer_container > td {
+    padding: 0 !important;
+    vertical-align: top !important;
+}
+
+.drone-chart-wrap {
+    position: absolute;
+    top: 40px; /* matches MissionControl $header_h */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    padding: var(--drone-pad);
+    overflow: hidden;
+}
+
+.block_renderer_canvas .block_renderer_container .drone-chart-wrap canvas.drone-chart,
+.drone-chart-wrap canvas.drone-chart {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+}
+
+.drone-imu {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: var(--drone-pad);
+    gap: var(--drone-gap-sm);
+    overflow: hidden;
+}
+
+.drone-imu-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--drone-gap);
+    flex-shrink: 0;
+    min-width: 0;
+    width: 100%;
+}
+
+.drone-imu-bar .duckiedrone-imu-status {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 28px;
+    max-height: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid var(--r-border, #dde1ea);
+    border-radius: var(--r-radius-sm, 6px);
+    padding: 4px 8px;
+    background: var(--r-surface, #f4f6fa);
+    color: var(--r-text, #1a1d26);
+    font-size: var(--r-fs-sm, 11px);
+    line-height: 1.3;
+    text-align: left;
+}
+
+.drone-imu-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--drone-gap-sm);
+    flex-shrink: 0;
+}
+
+.drone-imu-actions .btn {
+    min-width: 72px;
+    padding: 4px 8px;
+    font-size: var(--r-fs-sm, 11px);
+    font-weight: var(--r-fw-semibold, 600);
+    border-radius: var(--r-radius-sm, 6px);
+    line-height: 1.3;
+}
+
+.drone-imu .drone-chart-wrap {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0; /* outer .drone-imu already pads */
+}
+
+/* ---- IMU status chip ---- */
+.duckiedrone-imu-status-error {
+    color: var(--r-bad, #b91c1c) !important;
+    border-color: var(--r-bad-border, #fecaca) !important;
+    background: var(--r-bad-bg, #fef2f2) !important;
+}
+
+.duckiedrone-imu-status-success {
+    color: var(--r-ok, #047857) !important;
+    border-color: var(--r-ok-border, #bbf7d0) !important;
+    background: var(--r-ok-bg, #ecfdf3) !important;
+}
