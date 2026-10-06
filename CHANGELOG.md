@@ -1,3 +1,8 @@
+## 2.2.8 (October 06, 2026)
+  - feat(mission-control): restructure the default mission around the pilot's view
+  - feat(battery): add a Battery widget for Mission Control
+  - fix(arming): list actionable reasons in the arming failed popup
+
 ## 2.2.7 (July 29, 2026)
   - refactor: update localStorage keys to use ros_hostname for persistence
   - refactor: enhance load_setting function to handle valid stored zero values
