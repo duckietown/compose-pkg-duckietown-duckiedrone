@@ -352,10 +352,13 @@ class Mavros_Arming extends BlockRenderer {
                                     '<strong>Arming failed.</strong><br><br>' +
                                     errorMsg + '<br><br>' +
                                     'Common reasons:<br>' +
-                                    '• Pre-flight checks not passed (GPS, sensors, etc.)<br>' +
-                                    '• Vehicle not in a valid mode for arming<br>' +
-                                    '• Safety checks preventing arming<br><br>' +
-                                    'Check the logs of the dt-px4 and mavros containers for more details.'
+                                    '• The throttle is not at 0. Press Space to reset it.<br>' +
+                                    '• PX4 is not receiving the Remote Control commands. Keep this tab in the foreground and check that the JOYSTICK heart is green.<br>' +
+                                    '• No flight mode is active. Click STABILIZED and wait for it to highlight.<br>' +
+                                    '• OFFBOARD is selected but no controller is running.<br>' +
+                                    '• The flight stack is still starting. Wait until the widgets show data.<br>' +
+                                    '• The Duckiedrone is not level, or it moved while arming.<br><br>' +
+                                    'If arming still fails, see the Troubleshooting section of "Flying the Duckiedrone" in the manual.'
                                 );
                             } else {
                                 // Disarming failed
