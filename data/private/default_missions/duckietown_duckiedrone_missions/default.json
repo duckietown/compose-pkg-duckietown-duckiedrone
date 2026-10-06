@@ -3,60 +3,55 @@
         "blocks": [
             {
                 "shape": {
-                    "rows": 1,
-                    "cols": 3
+                    "rows": 4,
+                    "cols": 5
                 },
-                "renderer": "Duckiedrone_Heartbeat",
-                "title": "Joystick Heartbeat",
-                "subtitle": "/joystick/heartbeat",
+                "renderer": "SensorMsgs_CompressedImage",
+                "title": "Camera",
+                "subtitle": "/camera_node/image/compressed",
                 "args": {
                     "ros_hostname": "",
-                    "topic": "~/joystick/heartbeat",
-                    "frequency": 5,
+                    "topic": "~/camera_node/image/compressed",
+                    "fps": 2,
+                    "position": "center center",
+                    "style": "cover",
+                    "background_color": ""
+                }
+            },
+            {
+                "shape": {
+                    "rows": 2,
+                    "cols": 3
+                },
+                "renderer": "Mavros_Arming",
+                "title": "Arm / Disarm",
+                "subtitle": "WARNING: This will activate the propellers",
+                "args": {
+                    "ros_hostname": "",
+                    "arming_service": "/mavros\/cmd\/arming",
+                    "kill_switch": "/mavros\/cmd\/command",
+					"set_mode_service": "/mavros\/set_mode",
+					"state_topic": "/mavros\/state",
+                    "frequency": 10,
                     "background_color": "#fff"
                 }
             },
             {
                 "shape": {
                     "rows": 2,
-                    "cols": 5
-                },
-                "renderer": "DuckietownMsgs_DroneMotorCommand",
-                "title": "Motors PWM",
-                "subtitle": "/mavros/rc/out",
-                "args": {
-                    "ros_hostname": "",
-                    "topic": "/mavros/rc/out",
-                    "message_type": "mavros_msgs/RCOut",
-                    "fps": 5,
-                    "min_value": 900,
-                    "max_value": 2000
-                }
-            },
-            {
-                "shape": {
-                    "rows": 1,
                     "cols": 3
                 },
-                "renderer": "Duckiedrone_Heartbeats_Monitor",
-                "title": "Heartbeats Monitor",
-                "subtitle": "/heartbeat/*",
+                "renderer": "Duckiedrone_Battery",
+                "title": "Battery",
+                "subtitle": "/mavros/battery",
                 "args": {
                     "ros_hostname": "",
-                    "topic1": "~/joystick/heartbeat",
-                    "label1": "JOYSTICK",
-                    "topic2": "~/altitude_node/heartbeat",
-                    "label2": "ALTITUDE",
-                    "topic3": "~/state_estimator_node/heartbeat",
-                    "label3": "STATE",
-                    "topic4": "~/pid_controller_node/heartbeat",
-                    "label4": "PID",
-                    "threshold": 2,
-                    "frequency": 2,
+                    "topic": "/mavros/battery",
+                    "timeout": 10,
                     "background_color": "#fff"
                 }
             },
-			{
+            {
 				"shape": {
 					"rows": 3,
 					"cols": 8
@@ -83,41 +78,62 @@
             {
                 "shape": {
                     "rows": 2,
-                    "cols": 3
+                    "cols": 4
                 },
-                "renderer": "Mavros_Arming",
-                "title": "Arm / Disarm",
-                "subtitle": "WARNING: This will activate the propellers",
+                "renderer": "DuckietownMsgs_DroneMotorCommand",
+                "title": "Motors PWM",
+                "subtitle": "/mavros/rc/out",
                 "args": {
                     "ros_hostname": "",
-                    "arming_service": "/mavros\/cmd\/arming",
-                    "kill_switch": "/mavros\/cmd\/command",
-					"set_mode_service": "/mavros\/set_mode",
-					"state_topic": "/mavros\/state",
-                    "frequency": 10,
+                    "topic": "/mavros/rc/out",
+                    "message_type": "mavros_msgs/RCOut",
+                    "fps": 5,
+                    "min_value": 900,
+                    "max_value": 2000
+                }
+            },
+            {
+                "shape": {
+                    "rows": 1,
+                    "cols": 4
+                },
+                "renderer": "Duckiedrone_Heartbeats_Monitor",
+                "title": "Heartbeats Monitor",
+                "subtitle": "/heartbeat/*",
+                "args": {
+                    "ros_hostname": "",
+                    "topic1": "~/joystick/heartbeat",
+                    "label1": "JOYSTICK",
+                    "topic2": "~/altitude_node/heartbeat",
+                    "label2": "ALTITUDE",
+                    "topic3": "~/state_estimator_node/heartbeat",
+                    "label3": "STATE",
+                    "topic4": "~/pid_controller_node/heartbeat",
+                    "label4": "PID",
+                    "threshold": 2,
+                    "frequency": 2,
+                    "background_color": "#fff"
+                }
+            },
+            {
+                "shape": {
+                    "rows": 1,
+                    "cols": 4
+                },
+                "renderer": "Duckiedrone_Heartbeat",
+                "title": "Joystick Heartbeat",
+                "subtitle": "/joystick/heartbeat",
+                "args": {
+                    "ros_hostname": "",
+                    "topic": "~/joystick/heartbeat",
+                    "frequency": 5,
                     "background_color": "#fff"
                 }
             },
             {
                 "shape": {
                     "rows": 2,
-                    "cols": 5
-                },
-                "renderer": "Duckiedrone_Altitude",
-                "title": "Altitude",
-                "subtitle": "/altitude_node/altitude",
-                "args": {
-                    "ros_hostname": "",
-                    "topic": "~/altitude_node/altitude",
-                    "reference": "~/pid_controller_node/desired/height",
-                    "label": "Altitude",
-                    "fps": 5
-                }
-            },
-            {
-                "shape": {
-                    "rows": 2,
-                    "cols": 5
+                    "cols": 4
                 },
                 "renderer": "Duckiedrone_TimeOfFlight",
                 "title": "Time-of-Flight",
@@ -129,6 +145,22 @@
                     "topic_left": "~/left_tof_driver_node/range",
                     "topic_right": "~/right_tof_driver_node/range",
                     "topic_top": "~/top_tof_driver_node/range",
+                    "fps": 5
+                }
+            },
+            {
+                "shape": {
+                    "rows": 2,
+                    "cols": 4
+                },
+                "renderer": "Duckiedrone_Altitude",
+                "title": "Altitude",
+                "subtitle": "/altitude_node/altitude",
+                "args": {
+                    "ros_hostname": "",
+                    "topic": "~/altitude_node/altitude",
+                    "reference": "~/pid_controller_node/desired/height",
+                    "label": "Altitude",
                     "fps": 5
                 }
             },
@@ -147,23 +179,6 @@
                     "level_service": "/px4_calibration/calibrate_level",
                     "status_topic": "/px4_calibration/status",
                     "fps": 5
-                }
-            },
-            {
-                "shape": {
-                    "rows": 4,
-                    "cols": 8
-                },
-                "renderer": "SensorMsgs_CompressedImage",
-                "title": "Camera",
-                "subtitle": "/camera_node/image/compressed",
-                "args": {
-                    "ros_hostname": "",
-                    "topic": "~/camera_node/image/compressed",
-                    "fps": 2,
-                    "position": "center center",
-                    "style": "cover",
-                    "background_color": ""
                 }
             }
         ]

@@ -61,7 +61,7 @@ class Mavros_Arming extends BlockRenderer {
         <style type="text/css">
             #<?php echo $id ?> .arming-widget-grid {
                 display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-columns: 1fr 1fr;
                 column-gap: 8px;
                 row-gap: 4px;
                 height: 100%;
@@ -90,11 +90,23 @@ class Mavros_Arming extends BlockRenderer {
                 min-height: 12px;
                 text-align: center;
             }
+            #<?php echo $id ?> .arming-widget-grid .col-mode {
+                grid-column: 1 / span 2;
+                grid-row: 2;
+            }
             #<?php echo $id ?> .arming-widget-grid .arming-btn,
-            #<?php echo $id ?> .arming-widget-grid .btn-group-vertical > .btn {
-                font-size: 9pt;
-                padding: 3px 6px;
-                width: 90px;
+            #<?php echo $id ?> .arming-widget-grid .toggle .btn {
+                font-size: 13pt;
+                font-weight: bold;
+            }
+            #<?php echo $id ?> .arming-widget-grid .arming-btn {
+                width: 130px;
+                height: 46px;
+            }
+            #<?php echo $id ?> .arming-widget-grid .btn-group > .btn {
+                font-size: 10pt;
+                padding: 4px 6px;
+                width: 115px;
             }
             #<?php echo $id ?> .arming-widget-grid .btn-stack {
                 display: flex;
@@ -105,7 +117,7 @@ class Mavros_Arming extends BlockRenderer {
         </style>
 
         <div class="arming-widget-grid">
-            <!-- Col 1 — ARM / DISARM toggle -->
+            <!-- Row 1, left — ARM / DISARM toggle -->
             <div class="col">
                 <div class="col-label">ARM / DISARM</div>
                 <input type="checkbox"
@@ -115,16 +127,17 @@ class Mavros_Arming extends BlockRenderer {
                        data-off="DISARMED"
                        data-offstyle="warning"
                        data-class="fast"
-                       data-size="small"
+                       data-width="130"
+                       data-height="46"
                        name="drone_arming_toggle"
                        id="drone_arming_toggle">
                 <div id="arming_status_message" class="status-msg"></div>
             </div>
 
-            <!-- Col 2 — FLIGHT MODE selector, stacked vertically -->
-            <div class="col">
+            <!-- Row 2 — FLIGHT MODE selector -->
+            <div class="col col-mode">
                 <div class="col-label">FLIGHT MODE</div>
-                <div class="btn-group-vertical btn-group-xs" role="group" id="drone_mode_selector">
+                <div class="btn-group" role="group" id="drone_mode_selector">
                     <button type="button" class="btn btn-default" data-mode="STABILIZED"
                             title="PX4 STABILIZED — manual attitude control that self-levels; needs no GPS or altitude estimate. Use this for manual flight.">STABILIZED</button>
                     <!-- LOITER / ALTITUDE hidden for now (not in current LX scope); kept in
@@ -139,12 +152,12 @@ class Mavros_Arming extends BlockRenderer {
                 <div id="mode_status_message" class="status-msg"></div>
             </div>
 
-            <!-- Col 3 — KILL button -->
+            <!-- Row 1, right — KILL button -->
             <div class="col">
                 <div class="col-label">ACTIONS</div>
                 <div class="btn-stack">
                     <button type="button"
-                            class="btn btn-danger btn-xs arming-btn"
+                            class="btn btn-danger arming-btn"
                             id="drone_kill_switch_button"
                             title="Emergency Kill Switch — Force disarm immediately">
                         <i class="fa fa-bolt" style="margin-right: 3px;"></i>
