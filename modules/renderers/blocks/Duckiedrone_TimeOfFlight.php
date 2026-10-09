@@ -1,5 +1,6 @@
 <?php
 
+use \system\classes\Core;
 use \system\classes\BlockRenderer;
 use \system\packages\ros\ROS;
 
@@ -58,7 +59,10 @@ class Duckiedrone_TimeOfFlight extends BlockRenderer {
 
     protected static function render($id, &$args) {
         ?>
-        <canvas class="resizable" style="width:100%; height:95%; padding:6px 16px"></canvas>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-chart-wrap resizable">
+            <canvas class="drone-chart"></canvas>
+        </div>
         <?php
         $ros_hostname = $args['ros_hostname'] ?? null;
         $ros_hostname = ROS::sanitize_hostname($ros_hostname);

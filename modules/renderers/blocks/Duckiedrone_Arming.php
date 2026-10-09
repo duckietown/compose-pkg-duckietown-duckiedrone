@@ -51,119 +51,61 @@ class Mavros_Arming extends BlockRenderer {
         "background_color" => [
             "name" => "Background color",
             "type" => "color",
-            "mandatory" => True,
-            "default" => "#fff"
+            "mandatory" => False,
+            "default" => ""
         ]
     ];
 
     protected static function render($id, &$args) {
+        // Only apply an explicit custom color. Transparent / white / empty
+        // must not override the shared white .mission-control-item card.
+        $bg = trim((string) ($args['background_color'] ?? ''));
+        $bg_l = strtolower($bg);
+        if ($bg_l === '' || $bg_l === 'transparent' || $bg_l === '#fff' || $bg_l === '#ffffff' || $bg_l === 'white') {
+            $bg = '';
+        }
         ?>
-        <style type="text/css">
-            #<?php echo $id ?> .arming-widget-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                column-gap: 8px;
-                row-gap: 4px;
-                height: 100%;
-                width: 100%;
-                padding: 5px;
-                box-sizing: border-box;
-                align-items: start;
-                justify-items: center;
-            }
-            #<?php echo $id ?> .arming-widget-grid .col-label {
-                font-size: 9pt;
-                font-weight: bold;
-                text-align: center;
-                margin-bottom: 3px;
-            }
-            #<?php echo $id ?> .arming-widget-grid .col {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                width: 100%;
-            }
-            #<?php echo $id ?> .arming-widget-grid .status-msg {
-                margin-top: 3px;
-                font-size: 8pt;
-                color: #d9534f;
-                min-height: 12px;
-                text-align: center;
-            }
-            #<?php echo $id ?> .arming-widget-grid .col-mode {
-                grid-column: 1 / span 2;
-                grid-row: 2;
-            }
-            #<?php echo $id ?> .arming-widget-grid .arming-btn,
-            #<?php echo $id ?> .arming-widget-grid .toggle .btn {
-                font-size: 13pt;
-                font-weight: bold;
-            }
-            #<?php echo $id ?> .arming-widget-grid .arming-btn {
-                width: 130px;
-                height: 46px;
-            }
-            #<?php echo $id ?> .arming-widget-grid .btn-group > .btn {
-                font-size: 10pt;
-                padding: 4px 6px;
-                width: 115px;
-            }
-            #<?php echo $id ?> .arming-widget-grid .btn-stack {
-                display: flex;
-                flex-direction: column;
-                gap: 3px;
-                align-items: center;
-            }
-        </style>
-
-        <div class="arming-widget-grid">
-            <!-- Row 1, left — ARM / DISARM toggle -->
-            <div class="col">
-                <div class="col-label">ARM / DISARM</div>
-                <input type="checkbox"
-                       data-toggle="toggle"
-                       data-on="ARMED"
-                       data-onstyle="success"
-                       data-off="DISARMED"
-                       data-offstyle="warning"
-                       data-class="fast"
-                       data-width="130"
-                       data-height="46"
-                       name="drone_arming_toggle"
-                       id="drone_arming_toggle">
-                <div id="arming_status_message" class="status-msg"></div>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-arm resizable">
+            <div class="drone-arm-col">
+                <div class="drone-arm-label">Arm / Disarm</div>
+                <button type="button"
+                        class="drone-arm-ctl drone-arm-arming"
+                        id="drone_arming_toggle"
+                        aria-pressed="false"
+                        title="Arm or disarm the propellers">
+                    DISARMED
+                </button>
+                <div id="arming_status_message" class="drone-arm-status"></div>
             </div>
 
-            <!-- Row 2 — FLIGHT MODE selector -->
-            <div class="col col-mode">
-                <div class="col-label">FLIGHT MODE</div>
-                <div class="btn-group" role="group" id="drone_mode_selector">
-                    <button type="button" class="btn btn-default" data-mode="STABILIZED"
+            <div class="drone-arm-col">
+                <div class="drone-arm-label">Flight mode</div>
+                <div class="drone-arm-ctl drone-arm-modes" role="group" id="drone_mode_selector">
+                    <button type="button" class="drone-arm-mode-btn" data-mode="STABILIZED"
                             title="PX4 STABILIZED — manual attitude control that self-levels; needs no GPS or altitude estimate. Use this for manual flight.">STABILIZED</button>
                     <!-- LOITER / ALTITUDE hidden for now (not in current LX scope); kept in
                          the DOM + JS wiring below so they can be re-enabled later. -->
-                    <button type="button" class="btn btn-default" data-mode="AUTO.LOITER" style="display: none"
+                    <button type="button" class="drone-arm-mode-btn" data-mode="AUTO.LOITER" style="display: none"
                             title="PX4 AUTO.LOITER — position/altitude hold, safe armable default">LOITER</button>
-                    <button type="button" class="btn btn-default" data-mode="ALTCTL" style="display: none"
+                    <button type="button" class="drone-arm-mode-btn" data-mode="ALTCTL" style="display: none"
                             title="PX4 ALTCTL — manual stick with altitude hold">ALTITUDE</button>
-                    <button type="button" class="btn btn-default" data-mode="OFFBOARD"
+                    <button type="button" class="drone-arm-mode-btn" data-mode="OFFBOARD"
                             title="PX4 OFFBOARD — external setpoints">OFFBOARD</button>
                 </div>
-                <div id="mode_status_message" class="status-msg"></div>
+                <div id="mode_status_message" class="drone-arm-status"></div>
             </div>
 
-            <!-- Row 1, right — KILL button -->
-            <div class="col">
-                <div class="col-label">ACTIONS</div>
-                <div class="btn-stack">
-                    <button type="button"
-                            class="btn btn-danger arming-btn"
-                            id="drone_kill_switch_button"
-                            title="Emergency Kill Switch — Force disarm immediately">
-                        <i class="fa fa-bolt" style="margin-right: 3px;"></i>
-                        KILL
-                    </button>
-                </div>
+            <div class="drone-arm-col">
+                <div class="drone-arm-label">Actions</div>
+                <button type="button"
+                        class="drone-arm-ctl drone-arm-kill"
+                        id="drone_kill_switch_button"
+                        title="Emergency Kill Switch — Force disarm immediately">
+                    <i class="fa fa-bolt" aria-hidden="true"></i>
+                    KILL
+                </button>
+                <div class="drone-arm-status" aria-hidden="true"></div>
             </div>
         </div>
         
@@ -230,12 +172,23 @@ class Mavros_Arming extends BlockRenderer {
                     });
                 }
 
+                function set_arming_ui(armed) {
+                    let btn = $('#<?php echo $id ?> #drone_arming_toggle');
+                    btn.toggleClass('is-armed', !!armed)
+                       .attr('aria-pressed', armed ? 'true' : 'false')
+                       .text(armed ? 'ARMED' : 'DISARMED');
+                }
+
+                function set_kill_ui(html) {
+                    $('#<?php echo $id ?> #drone_kill_switch_button').html(html);
+                }
+
                 function emergency_kill() {
                     console.log("EMERGENCY KILL SWITCH ACTIVATED!");
                     
                     let kill_btn = $('#<?php echo $id ?> #drone_kill_switch_button');
                     kill_btn.prop('disabled', true);
-                    kill_btn.html('<i class="fa fa-spinner fa-spin" style="margin-right: 5px;"></i>KILLING...');
+                    set_kill_ui('<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>KILLING...');
                     
                     // Force disarm using kill switch command
                     let request = new ROSLIB.ServiceRequest({
@@ -257,49 +210,46 @@ class Mavros_Arming extends BlockRenderer {
                         if (response.success) {
                             console.log("Emergency kill successful!");
                             isArmed = false;
+                            set_arming_ui(false);
 
-                            // Reset states
-                            $('#<?php echo $id ?> #drone_arming_toggle').bootstrapToggle('off');
-
-                            // Re-enable kill button
                             setTimeout(function() {
                                 kill_btn.prop('disabled', false);
-                                kill_btn.html('<i class="fa fa-bolt" style="margin-right: 5px;"></i>KILL');
+                                set_kill_ui('<i class="fa fa-bolt" aria-hidden="true"></i>KILL');
                             }, 1000);
                         } else {
                             console.error("Kill switch failed! Result:", response.result);
-                            kill_btn.html('<i class="fa fa-exclamation-triangle" style="margin-right: 5px;"></i>FAILED');
+                            set_kill_ui('<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>FAILED');
                             
                             setTimeout(function() {
                                 kill_btn.prop('disabled', false);
-                                kill_btn.html('<i class="fa fa-bolt" style="margin-right: 5px;"></i>KILL');
+                                set_kill_ui('<i class="fa fa-bolt" aria-hidden="true"></i>KILL');
                             }, 2000);
                         }
                     }, function(error) {
                         console.error("Kill switch service call error:", error);
-                        kill_btn.html('<i class="fa fa-exclamation-triangle" style="margin-right: 5px;"></i>ERROR');
+                        set_kill_ui('<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>ERROR');
                         
                         setTimeout(function() {
                             kill_btn.prop('disabled', false);
-                            kill_btn.html('<i class="fa fa-bolt" style="margin-right: 5px;"></i>KILL');
+                            set_kill_ui('<i class="fa fa-bolt" aria-hidden="true"></i>KILL');
                         }, 2000);
                     });
                 }
 
                 function showDashboardPopup(message) {
-                    // Create popup element
+                    let styles = getComputedStyle(document.documentElement);
                     let popup = $('<div>')
                         .css({
                             'position': 'fixed',
                             'top': '20px',
                             'left': '50%',
                             'transform': 'translateX(-50%)',
-                            'background-color': '#f8d7da',
-                            'color': '#721c24',
-                            'border': '1px solid #f5c6cb',
-                            'border-radius': '4px',
+                            'background-color': styles.getPropertyValue('--r-bad-bg').trim() || '#fef2f2',
+                            'color': styles.getPropertyValue('--r-bad').trim() || '#b91c1c',
+                            'border': '1px solid ' + (styles.getPropertyValue('--r-bad-border').trim() || '#fecaca'),
+                            'border-radius': '8px',
                             'padding': '15px 20px',
-                            'box-shadow': '0 4px 6px rgba(0,0,0,0.1)',
+                            'box-shadow': styles.getPropertyValue('--r-shadow').trim() || '0 1px 2px rgba(0,0,0,0.1)',
                             'z-index': '10000',
                             'max-width': '500px',
                             'opacity': '0',
@@ -326,13 +276,14 @@ class Mavros_Arming extends BlockRenderer {
                     }, 10000);
                 }
 
-                $('#<?php echo $id ?> #drone_arming_toggle').off().change(function() {
+                $('#<?php echo $id ?> #drone_arming_toggle').off().click(function() {
                     if (_syncing) return;
-                    let checked = $(this).prop('checked');
+                    let checked = !isArmed;
                     console.log("Arming toggle changed. Setting armed to:", checked);
                     
                     // Clear previous status message
                     $('#<?php echo $id ?> #arming_status_message').text('');
+                    set_arming_ui(checked);
                     
                     set_arming(checked, function(response) {
                         if (response.success) {
@@ -387,8 +338,8 @@ class Mavros_Arming extends BlockRenderer {
                                 $('#<?php echo $id ?> #arming_status_message').text('');
                             }, 10000);
                             
-                            // Revert toggle on failure
-                            $('#<?php echo $id ?> #drone_arming_toggle').bootstrapToggle(checked ? 'off' : 'on');
+                            // Revert UI on failure
+                            set_arming_ui(isArmed);
                         }
                     });
                 });
@@ -396,14 +347,11 @@ class Mavros_Arming extends BlockRenderer {
                 // Helper: visually mark the selected mode button without firing its click handler.
                 function highlight_mode_button(mode) {
                     let grp = $('#<?php echo $id ?> #drone_mode_selector');
-                    grp.find('button').removeClass('btn-primary btn-info active')
-                                      .addClass('btn-default');
+                    grp.find('button').removeClass('is-active');
                     if (mode === null) return;
                     let btn = grp.find('button[data-mode="' + mode + '"]');
                     if (btn.length) {
-                        btn.removeClass('btn-default')
-                           .addClass(mode === _MODE_OFFBOARD ? 'btn-primary' : 'btn-info')
-                           .addClass('active');
+                        btn.addClass('is-active');
                     }
                 }
 
@@ -445,9 +393,8 @@ class Mavros_Arming extends BlockRenderer {
                     _syncing = true;
                     try {
                         if (message.armed !== isArmed) {
-                            $('#<?php echo $id ?> #drone_arming_toggle')
-                                .bootstrapToggle(message.armed ? 'on' : 'off');
                             isArmed = message.armed;
+                            set_arming_ui(message.armed);
                         }
                         if (message.mode !== currentMode) {
                             currentMode = message.mode;
@@ -470,11 +417,13 @@ class Mavros_Arming extends BlockRenderer {
         ROS::connect($ros_hostname);
         ?>
 
+        <?php if ($bg !== '') { ?>
         <style type="text/css">
             #<?php echo $id ?>{
-                background-color: <?php echo $args['background_color'] ?>;
+                background-color: <?php echo htmlspecialchars($bg) ?>;
             }
         </style>
+        <?php } ?>
         <?php
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use \system\classes\Core;
 use \system\classes\BlockRenderer;
 use \system\packages\ros\ROS;
 
@@ -60,7 +61,10 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
         $message_type = trim($args['message_type'] ?? '');
         $fallback_topic = trim($args['fallback_topic'] ?? '/mavros/rc/out');
         ?>
-        <canvas class="resizable" style="width:100%; height:95%; padding:6px 16px"></canvas>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-chart-wrap resizable">
+            <canvas class="drone-chart"></canvas>
+        </div>
         <?php
         $ros_hostname = $args['ros_hostname'] ?? null;
         $ros_hostname = ROS::sanitize_hostname($ros_hostname);
