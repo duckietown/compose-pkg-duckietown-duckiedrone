@@ -12,6 +12,18 @@
     --drone-gap-sm: 6px;
 }
 
+/* Keep the mission grid on the historical 970px canvas. Compose sizes each
+   cell from the grid's clientWidth, and a full-window grid makes every card
+   about twice as tall, so Remote Control falls below a 1080p screen. The
+   page stylesheet sets max-width: 100% on the same id; the extra class
+   wins that cascade. 970 matches MissionControl's default canvas: 8 columns
+   and a 10px gutter, which is the size pilots could fly from before. */
+#vehicle-mission-control-grid.mission-control-grid {
+    max-width: 970px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .drone-rc,
 .drone-arm,
 .drone-hb,

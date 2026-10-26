@@ -3,23 +3,6 @@
         "blocks": [
             {
                 "shape": {
-                    "rows": 4,
-                    "cols": 5
-                },
-                "renderer": "SensorMsgs_CompressedImage",
-                "title": "Camera",
-                "subtitle": "/camera_node/image/compressed",
-                "args": {
-                    "ros_hostname": "",
-                    "topic": "~/camera_node/image/compressed",
-                    "fps": 2,
-                    "position": "center center",
-                    "style": "cover",
-                    "background_color": ""
-                }
-            },
-            {
-                "shape": {
                     "rows": 2,
                     "cols": 3
                 },
@@ -75,6 +58,23 @@
 					"background_color": "#fff"
 				}
 			},
+            {
+                "shape": {
+                    "rows": 4,
+                    "cols": 5
+                },
+                "renderer": "SensorMsgs_CompressedImage",
+                "title": "Camera",
+                "subtitle": "/camera_node/image/compressed",
+                "args": {
+                    "ros_hostname": "",
+                    "topic": "~/camera_node/image/compressed",
+                    "fps": 2,
+                    "position": "center center",
+                    "style": "cover",
+                    "background_color": ""
+                }
+            },
             {
                 "shape": {
                     "rows": 2,
