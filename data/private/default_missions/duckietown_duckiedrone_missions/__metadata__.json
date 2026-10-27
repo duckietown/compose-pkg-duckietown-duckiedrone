@@ -3,10 +3,11 @@
 		"auth": {
 			"type": "public",
 			"owner": null,
-			"grant": [
+			"grant": [],
+			"guest": [
+				"r"
 			]
 		}
 	},
-	"_metadata": [
-	]
+	"_metadata": []
 }
