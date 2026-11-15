@@ -127,9 +127,10 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                 if (is_null($args["topic{$i}"]) || strlen($args["topic{$i}"]) <= 0)
                     continue;
                 ?>
-                <div class="drone-hb-item heartbeats-monitor-heart<?php echo $i ?>" id="heartbeats-monitor-heart<?php echo $i ?>-wrap">
-                    <span id="heartbeats-monitor-heart<?php echo $i ?>" class="glyphicon glyphicon-heart" aria-hidden="true"></span>
+                <div class="drone-hb-item heartbeats-monitor-heart<?php echo $i ?> is-stale" id="heartbeats-monitor-heart<?php echo $i ?>-wrap" data-state="stale">
+                    <span id="heartbeats-monitor-heart<?php echo $i ?>" class="glyphicon glyphicon-heart-empty" aria-hidden="true"></span>
                     <span class="drone-hb-label"><?php echo htmlspecialchars($args["label{$i}"]) ?></span>
+                    <span class="drone-hb-state" id="heartbeats-monitor-heart<?php echo $i ?>-state">STALE</span>
                 </div>
             <?php
             }
@@ -187,11 +188,19 @@ class Duckiedrone_Heartbeats_Monitor extends BlockRenderer {
                 
                 function _heartbeat_set_state(label, state) {
                     let $item = $("#<?php echo $id ?> .heartbeats-monitor-" + label);
-                    $item.removeClass("is-ok is-stale is-warn is-bad");
-                    if (state === "ok") $item.addClass("is-ok");
-                    else if (state === "warn") $item.addClass("is-warn");
-                    else if (state === "bad") $item.addClass("is-bad");
-                    else $item.addClass("is-stale");
+                    let $icon = $("#<?php echo $id ?> #heartbeats-monitor-" + label);
+                    let $state = $("#<?php echo $id ?> #heartbeats-monitor-" + label + "-state");
+                    let meta = {
+                        ok: { cls: "is-ok", text: "OK", icon: "glyphicon-heart" },
+                        warn: { cls: "is-warn", text: "WARN", icon: "glyphicon-exclamation-sign" },
+                        bad: { cls: "is-bad", text: "FAIL", icon: "glyphicon-remove-sign" },
+                        stale: { cls: "is-stale", text: "STALE", icon: "glyphicon-heart-empty" }
+                    };
+                    let info = meta[state] || meta.stale;
+                    $item.removeClass("is-ok is-stale is-warn is-bad").addClass(info.cls).attr("data-state", state);
+                    $icon.removeClass("glyphicon-heart glyphicon-heart-empty glyphicon-exclamation-sign glyphicon-remove-sign")
+                         .addClass(info.icon);
+                    $state.text(info.text);
                 }
                 
                 function _update_heartbeats_monitor(){

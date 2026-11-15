@@ -103,18 +103,33 @@ class Duckiedrone_TimeOfFlight extends BlockRenderer {
                     type: 'line',
                     data: {
                         labels: range(time_horizon_secs - 1, 0, 1),
-                        datasets: sensor_specs.map(function (sensor) {
+                        datasets: sensor_specs.map(function (sensor, index) {
+                            let styles = [
+                                { dash: [], point: 'circle' },
+                                { dash: [6, 4], point: 'triangle' },
+                                { dash: [2, 3], point: 'rect' },
+                                { dash: [8, 3, 2, 3], point: 'rectRot' },
+                                { dash: [1, 2], point: 'crossRot' }
+                            ];
+                            let style = styles[index % styles.length];
                             return {
                                 label: sensor.label,
                                 backgroundColor: color(sensor.color).alpha(0.5).rgbString(),
                                 borderColor: sensor.color,
                                 fill: false,
-                                pointRadius: 0,
+                                borderDash: style.dash,
+                                pointStyle: style.point,
+                                pointRadius: 2,
                                 data: new Array(time_horizon_secs).fill(null)
                             };
                         })
                     },
                     options: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
                         scales: {
                             xAxes: [{
                                 scaleLabel: {

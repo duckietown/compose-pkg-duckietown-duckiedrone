@@ -3,6 +3,23 @@
         "blocks": [
             {
                 "shape": {
+                    "rows": 4,
+                    "cols": 5
+                },
+                "renderer": "SensorMsgs_CompressedImage",
+                "title": "Camera",
+                "subtitle": "/camera_node/image/compressed",
+                "args": {
+                    "ros_hostname": "",
+                    "topic": "~/camera_node/image/compressed",
+                    "fps": 2,
+                    "position": "center center",
+                    "style": "cover",
+                    "background_color": ""
+                }
+            },
+            {
+                "shape": {
                     "rows": 2,
                     "cols": 3
                 },
@@ -58,23 +75,6 @@
 					"background_color": "#fff"
 				}
 			},
-            {
-                "shape": {
-                    "rows": 4,
-                    "cols": 5
-                },
-                "renderer": "SensorMsgs_CompressedImage",
-                "title": "Camera",
-                "subtitle": "/camera_node/image/compressed",
-                "args": {
-                    "ros_hostname": "",
-                    "topic": "~/camera_node/image/compressed",
-                    "fps": 2,
-                    "position": "center center",
-                    "style": "cover",
-                    "background_color": ""
-                }
-            },
             {
                 "shape": {
                     "rows": 2,
@@ -135,6 +135,22 @@
                     "rows": 2,
                     "cols": 4
                 },
+                "renderer": "Duckiedrone_Altitude",
+                "title": "Altitude",
+                "subtitle": "/altitude_node/altitude",
+                "args": {
+                    "ros_hostname": "",
+                    "topic": "~/altitude_node/altitude",
+                    "reference": "~/pid_controller_node/desired/height",
+                    "label": "Altitude",
+                    "fps": 5
+                }
+            },
+            {
+                "shape": {
+                    "rows": 2,
+                    "cols": 4
+                },
                 "renderer": "Duckiedrone_TimeOfFlight",
                 "title": "Time-of-Flight",
                 "subtitle": "/bottom_tof_driver_node/range, /front_tof_driver_node/range, /left_tof_driver_node/range, /right_tof_driver_node/range, /top_tof_driver_node/range",
@@ -145,22 +161,6 @@
                     "topic_left": "~/left_tof_driver_node/range",
                     "topic_right": "~/right_tof_driver_node/range",
                     "topic_top": "~/top_tof_driver_node/range",
-                    "fps": 5
-                }
-            },
-            {
-                "shape": {
-                    "rows": 2,
-                    "cols": 4
-                },
-                "renderer": "Duckiedrone_Altitude",
-                "title": "Altitude",
-                "subtitle": "/altitude_node/altitude",
-                "args": {
-                    "ros_hostname": "",
-                    "topic": "~/altitude_node/altitude",
-                    "reference": "~/pid_controller_node/desired/height",
-                    "label": "Altitude",
                     "fps": 5
                 }
             },

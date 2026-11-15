@@ -83,7 +83,9 @@ class Duckiedrone_Altitude extends BlockRenderer {
                             backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.red,
                             fill: true,
-                            pointRadius: 0,
+                            borderDash: [],
+                            pointStyle: 'circle',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(null)
                         }, {
                             label: 'Reference',
@@ -91,11 +93,18 @@ class Duckiedrone_Altitude extends BlockRenderer {
                             borderColor: window.chartColors.blue,
                             fill: false,
                             hidden: !has_reference_topic,
-                            pointRadius: 0,
+                            borderDash: [6, 4],
+                            pointStyle: 'triangle',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(null)
                         }]
                     },
                     options: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
                         scales: {
                             xAxes: [{
                                 scaleLabel: {

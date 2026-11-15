@@ -189,11 +189,11 @@ class Duckiedrone_Control extends BlockRenderer {
             </div>
             <div class="drone-rc-pad">
                 <div class="drone-rc-pad-title">Roll / Pitch</div>
-                <canvas id="drone_control_commands_joy_keys" width="120" height="120"></canvas>
+                <canvas id="drone_control_commands_joy_keys" width="180" height="180"></canvas>
             </div>
             <div class="drone-rc-stick">
                 <div class="drone-rc-stick-title">Yaw / Throttle</div>
-                <div id="drone_control_commands_joy_stick" style="width:120px;height:120px;margin:0 auto;"></div>
+                <div id="drone_control_commands_joy_stick" class="drone-rc-stick-surface" style="width:180px;height:180px;margin:0 auto;"></div>
             </div>
             <p class="drone-rc-hint">
                 <b>A</b> / <b>D</b> Roll
@@ -443,8 +443,33 @@ class Duckiedrone_Control extends BlockRenderer {
                     });
                 }
             
-                let ctx = document.getElementById("drone_control_commands_joy_keys").getContext('2d');
+                let joy_keys_canvas = document.getElementById("drone_control_commands_joy_keys");
+                let ctx = joy_keys_canvas.getContext('2d');
                 let gauge_ctx = document.getElementById("drone_control_commands_throttle_gauge").getContext('2d');
+                let joy_stick_el = document.getElementById("drone_control_commands_joy_stick");
+
+                // Size sticks to the card body instead of a fixed 120px square.
+                function drone_rc_stick_size() {
+                    let pad = joy_keys_canvas.parentElement;
+                    let stick = joy_stick_el.parentElement;
+                    let avail = Math.min(
+                        (pad ? pad.clientWidth : 180),
+                        (pad ? Math.max(120, pad.clientHeight - 18) : 180),
+                        (stick ? stick.clientWidth : 180),
+                        (stick ? Math.max(120, stick.clientHeight - 18) : 180),
+                        220
+                    );
+                    return Math.max(120, Math.round(avail));
+                }
+                function drone_rc_apply_stick_size(size) {
+                    joy_keys_canvas.width = size;
+                    joy_keys_canvas.height = size;
+                    joy_keys_canvas.style.width = size + 'px';
+                    joy_keys_canvas.style.height = size + 'px';
+                    joy_stick_el.style.width = size + 'px';
+                    joy_stick_el.style.height = size + 'px';
+                }
+                drone_rc_apply_stick_size(drone_rc_stick_size());
 
                 let roll_bar = $('#<?php echo $id ?> #drone_control_commands_bar_roll');
                 let pitch_bar = $('#<?php echo $id ?> #drone_control_commands_bar_pitch');
@@ -723,20 +748,20 @@ class Duckiedrone_Control extends BlockRenderer {
                         joy_stick.SetPosition(new_x, new_y);
                     }
 
-                    let line_width = 20;
+                    // Arrow layout is authored for a 100-unit square with origin inset;
+                    // scale it to the live canvas so the D-pad fills the card.
+                    let side = ctx.canvas.width || 180;
+                    let unit = side / 120;
+                    let line_width = Math.max(12, Math.round(20 * unit));
                     let pos = {
                         up: [50, 45, 50, 10],
                         down: [50, 55, 50, 90],
                         left: [45, 50, 10, 50],
                         right: [55, 50, 90, 50],
                     };
-                    // Canvas is 120x120. The arrows span base coords 10..90 (center 50);
-                    // scale 1.0 + offset 10 maps that to pixels 20..100, centered on 60,
-                    // leaving ~8px on every edge once the 20px stroke and arrowhead spread
-                    // are included, so no arrow clips.
-                    let scale = 1.0;
-                    let offsetX = 10;
-                    let offsetY = 10;
+                    let scale = unit;
+                    let offsetX = 10 * unit;
+                    let offsetY = 10 * unit;
                     
                     for (let k in pos) {
                         pos[k] = pos[k].map(x => x * scale);

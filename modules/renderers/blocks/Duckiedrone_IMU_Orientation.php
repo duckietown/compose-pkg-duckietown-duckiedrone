@@ -162,22 +162,39 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                             backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.red,
                             fill: true,
+                            borderDash: [],
+                            pointStyle: 'circle',
+                            pointRadius: 2,
+                            pointHoverRadius: 3,
                             data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Pitch',
                             backgroundColor: color(window.chartColors.green).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.green,
                             fill: true,
+                            borderDash: [6, 4],
+                            pointStyle: 'triangle',
+                            pointRadius: 2,
+                            pointHoverRadius: 3,
                             data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Yaw',
                             backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.blue,
                             fill: true,
+                            borderDash: [2, 3],
+                            pointStyle: 'rect',
+                            pointRadius: 2,
+                            pointHoverRadius: 3,
                             data: new Array(time_horizon_secs).fill(0)
                         }]
                     },
                     options: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
                         scales: {
                             xAxes: [{
                                 scaleLabel: {
@@ -192,7 +209,10 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                                 ticks: {
                                     suggestedMin: -180,
                                     suggestedMax: 180,
-                                    stepSize: 45
+                                    // 90deg steps avoid overlapping 180/135/90/45 labels
+                                    // in the short IMU card.
+                                    stepSize: 90,
+                                    maxTicksLimit: 5
                                 }
                             }]
                         },

@@ -12,14 +12,16 @@
     --drone-gap-sm: 6px;
 }
 
-/* Keep the mission grid on the historical 970px canvas. Compose sizes each
-   cell from the grid's clientWidth, and a full-window grid makes every card
-   about twice as tall, so Remote Control falls below a 1080p screen. The
-   page stylesheet sets max-width: 100% on the same id; the extra class
-   wins that cascade. 970 matches MissionControl's default canvas: 8 columns
-   and a 10px gutter, which is the size pilots could fly from before. */
-#vehicle-mission-control-grid.mission-control-grid {
-    max-width: 970px;
+/* Cap the mission grid at the design-system content width (--r-max /
+   1040px) so it lines up with the Mission Control toolbar. Compose sizes
+   each cell from the grid's clientWidth; without a cap the full-window
+   grid roughly doubles every card. The page stylesheet sets max-width:
+   100% / none on these nodes; the extra class + later load wins. */
+#vehicle-mission-control-grid.mission-control-grid,
+.robot-mission-grid-frame,
+.robot-status-bar {
+    max-width: var(--r-max, 1040px);
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
 }
@@ -39,8 +41,8 @@
 /* ---- Remote Control ---- */
 .drone-rc {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) auto minmax(120px, 140px) minmax(120px, 140px);
-    grid-template-rows: 1fr auto;
+    grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: var(--drone-gap);
     align-items: stretch;
 }
@@ -126,15 +128,40 @@
     justify-content: center;
     gap: var(--drone-gap-sm);
     min-width: 0;
+    min-height: 0;
 }
 
 .drone-rc-pad-title,
 .drone-rc-stick-title {
+    flex: 0 0 auto;
     font-size: var(--r-fs-xs, 10px);
     font-weight: var(--r-fw-semibold, 600);
     color: var(--r-muted, #6b7280);
     letter-spacing: var(--r-tracking-label, 0.04em);
     text-transform: uppercase;
+}
+
+/* Stick / D-pad grow with the card instead of staying fixed at 120px. */
+.drone-rc-pad canvas,
+.drone-rc-stick-surface {
+    display: block;
+    width: min(100%, 220px);
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-height: calc(100% - 18px);
+    margin: 0 auto;
+}
+
+.drone-rc-stick-surface {
+    position: relative;
+    min-width: 120px;
+    min-height: 120px;
+}
+
+.drone-rc-stick-surface canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .drone-rc-hint {
@@ -168,26 +195,29 @@
 }
 
 /* ---- Arm / Disarm ---- */
-/* One aligned row: label → control (identical footprint) → status. */
+/* One aligned row: label → control (identical footprint) → status.
+   Controls stretch to fill the card body like the released layout. */
 .drone-arm {
-    --drone-arm-h: 56px;
+    --drone-arm-h: 72px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     column-gap: var(--drone-gap);
     row-gap: 0;
-    align-items: start;
+    align-items: stretch;
     justify-items: stretch;
-    align-content: center;
+    align-content: stretch;
 }
 
 .drone-arm-col {
     display: grid;
-    grid-template-rows: 14px var(--drone-arm-h) 14px;
+    grid-template-rows: 14px minmax(var(--drone-arm-h), 1fr) 14px;
     gap: var(--drone-gap-sm);
-    align-items: center;
+    align-items: stretch;
     justify-items: stretch;
     width: 100%;
+    height: 100%;
     min-width: 0;
+    min-height: 0;
 }
 
 .drone-arm-label {
@@ -218,9 +248,9 @@
 /* Shared control footprint — arming, modes, kill */
 .drone-arm-ctl {
     width: 100%;
-    height: var(--drone-arm-h);
+    height: 100%;
     min-height: var(--drone-arm-h);
-    max-height: var(--drone-arm-h);
+    max-height: none;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -330,7 +360,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--drone-gap-sm);
+    gap: 2px;
     padding: var(--drone-gap-sm) var(--drone-gap);
     border: 1px solid var(--r-border, #dde1ea);
     border-radius: var(--r-radius-sm, 6px);
@@ -341,7 +371,7 @@
 }
 
 .drone-hb-item .glyphicon {
-    font-size: 18px;
+    font-size: 16px;
     margin: 0;
     color: var(--r-muted, #6b7280);
 }
@@ -352,12 +382,14 @@
 }
 
 .drone-hb-item.is-ok .glyphicon,
-.drone-hb-item.is-ok .drone-hb-label {
+.drone-hb-item.is-ok .drone-hb-label,
+.drone-hb-item.is-ok .drone-hb-state {
     color: var(--r-ok, #047857);
 }
 
 .drone-hb-item.is-stale .glyphicon,
-.drone-hb-item.is-stale .drone-hb-label {
+.drone-hb-item.is-stale .drone-hb-label,
+.drone-hb-item.is-stale .drone-hb-state {
     color: var(--r-muted, #6b7280);
 }
 
@@ -367,7 +399,8 @@
 }
 
 .drone-hb-item.is-warn .glyphicon,
-.drone-hb-item.is-warn .drone-hb-label {
+.drone-hb-item.is-warn .drone-hb-label,
+.drone-hb-item.is-warn .drone-hb-state {
     color: var(--r-warn, #b45309);
 }
 
@@ -377,7 +410,8 @@
 }
 
 .drone-hb-item.is-bad .glyphicon,
-.drone-hb-item.is-bad .drone-hb-label {
+.drone-hb-item.is-bad .drone-hb-label,
+.drone-hb-item.is-bad .drone-hb-state {
     color: var(--r-bad, #b91c1c);
 }
 
@@ -388,6 +422,17 @@
     text-transform: uppercase;
     color: var(--r-muted, #6b7280);
     text-align: center;
+}
+
+/* Text state so status is not colour-only. */
+.drone-hb-state {
+    font-size: 9px;
+    font-weight: var(--r-fw-semibold, 600);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--r-muted, #6b7280);
+    text-align: center;
+    line-height: 1.2;
 }
 
 /* ---- Joystick heartbeat pulse ---- */
