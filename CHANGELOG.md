@@ -1,3 +1,10 @@
+## 2.2.9 (October 27, 2026)
+  - feat(mission-control): polish Duckiedrone cards onto the shared dashboard chrome
+  - fix(mission-control): keep Arm, Battery, and Remote Control on a 1080p screen
+  - fix(heartbeat): show the full joystick pulse and its Publishing label
+  - fix(charts): draw Altitude, Time-of-Flight, IMU, and Motors below the card header
+  - fix(mission): keep the default mission guest-read-only
+
 ## 2.2.8 (October 06, 2026)
   - feat(mission-control): restructure the default mission around the pilot's view
   - feat(battery): add a Battery widget for Mission Control

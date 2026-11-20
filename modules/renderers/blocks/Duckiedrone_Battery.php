@@ -52,12 +52,15 @@ class Duckiedrone_Battery extends BlockRenderer {
                 height: 100%;
                 width: 100%;
                 box-sizing: border-box;
+                padding: 8px;
             }
             #<?php echo $id ?> .battery-icon {
                 position: relative;
-                width: 180px;
-                height: 92px;
-                margin-right: 12px;
+                width: min(92%, 320px);
+                aspect-ratio: 180 / 92;
+                height: auto;
+                max-height: calc(100% - 8px);
+                margin: 0;
                 border: 4px solid #333;
                 border-radius: 12px;
                 box-sizing: border-box;
@@ -65,11 +68,12 @@ class Duckiedrone_Battery extends BlockRenderer {
             #<?php echo $id ?> .battery-icon::after {
                 content: "";
                 position: absolute;
-                right: -14px;
+                right: -3.5%;
                 top: 50%;
                 transform: translateY(-50%);
-                width: 10px;
-                height: 30px;
+                width: 3.2%;
+                min-width: 8px;
+                height: 32%;
                 background-color: #333;
                 border-radius: 0 5px 5px 0;
             }
@@ -120,11 +124,11 @@ class Duckiedrone_Battery extends BlockRenderer {
                 line-height: 1.15;
             }
             #<?php echo $id ?> .battery-percentage {
-                font-size: 24pt;
+                font-size: clamp(16px, 4.2vw, 28px);
                 font-weight: bold;
             }
             #<?php echo $id ?> .battery-voltage {
-                font-size: 12pt;
+                font-size: clamp(11px, 2.2vw, 15px);
             }
         </style>
 

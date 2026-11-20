@@ -1,5 +1,6 @@
 <?php
 
+use \system\classes\Core;
 use \system\classes\BlockRenderer;
 use \system\packages\ros\ROS;
 
@@ -60,7 +61,10 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
         $message_type = trim($args['message_type'] ?? '');
         $fallback_topic = trim($args['fallback_topic'] ?? '/mavros/rc/out');
         ?>
-        <canvas class="resizable" style="width:100%; height:95%; padding:6px 16px"></canvas>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-chart-wrap resizable">
+            <canvas class="drone-chart"></canvas>
+        </div>
         <?php
         $ros_hostname = $args['ros_hostname'] ?? null;
         $ros_hostname = ROS::sanitize_hostname($ros_hostname);
@@ -89,28 +93,45 @@ class DuckietownMsgs_DroneMotorCommand extends BlockRenderer {
                             backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.red,
                             fill: true,
+                            borderDash: [],
+                            pointStyle: 'circle',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Motor 2',
                             backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.blue,
                             fill: true,
+                            borderDash: [6, 4],
+                            pointStyle: 'triangle',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Motor 3',
                             backgroundColor: color(window.chartColors.green).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.green,
                             fill: true,
+                            borderDash: [2, 3],
+                            pointStyle: 'rect',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Motor 4',
                             backgroundColor: color(window.chartColors.purple).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.purple,
                             fill: true,
+                            borderDash: [8, 3, 2, 3],
+                            pointStyle: 'rectRot',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(0)
                         }]
                     },
                     options: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
                         scales: {
                             xAxes: [{
                                 scaleLabel: {

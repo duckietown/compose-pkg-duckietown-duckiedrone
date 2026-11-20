@@ -1,5 +1,6 @@
 <?php
 
+use \system\classes\Core;
 use \system\classes\BlockRenderer;
 use \system\packages\ros\ROS;
 
@@ -46,7 +47,10 @@ class Duckiedrone_Altitude extends BlockRenderer {
 
     protected static function render($id, &$args) {
         ?>
-        <canvas class="resizable" style="width:100%; height:95%; padding:6px 16px"></canvas>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-chart-wrap resizable">
+            <canvas class="drone-chart"></canvas>
+        </div>
         <?php
         $ros_hostname = $args['ros_hostname'] ?? null;
         $ros_hostname = ROS::sanitize_hostname($ros_hostname);
@@ -79,7 +83,9 @@ class Duckiedrone_Altitude extends BlockRenderer {
                             backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.red,
                             fill: true,
-                            pointRadius: 0,
+                            borderDash: [],
+                            pointStyle: 'circle',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(null)
                         }, {
                             label: 'Reference',
@@ -87,11 +93,18 @@ class Duckiedrone_Altitude extends BlockRenderer {
                             borderColor: window.chartColors.blue,
                             fill: false,
                             hidden: !has_reference_topic,
-                            pointRadius: 0,
+                            borderDash: [6, 4],
+                            pointStyle: 'triangle',
+                            pointRadius: 2,
                             data: new Array(time_horizon_secs).fill(null)
                         }]
                     },
                     options: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
                         scales: {
                             xAxes: [{
                                 scaleLabel: {

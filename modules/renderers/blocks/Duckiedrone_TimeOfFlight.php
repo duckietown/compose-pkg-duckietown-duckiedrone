@@ -1,5 +1,6 @@
 <?php
 
+use \system\classes\Core;
 use \system\classes\BlockRenderer;
 use \system\packages\ros\ROS;
 
@@ -58,7 +59,10 @@ class Duckiedrone_TimeOfFlight extends BlockRenderer {
 
     protected static function render($id, &$args) {
         ?>
-        <canvas class="resizable" style="width:100%; height:95%; padding:6px 16px"></canvas>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-chart-wrap resizable">
+            <canvas class="drone-chart"></canvas>
+        </div>
         <?php
         $ros_hostname = $args['ros_hostname'] ?? null;
         $ros_hostname = ROS::sanitize_hostname($ros_hostname);
@@ -99,18 +103,33 @@ class Duckiedrone_TimeOfFlight extends BlockRenderer {
                     type: 'line',
                     data: {
                         labels: range(time_horizon_secs - 1, 0, 1),
-                        datasets: sensor_specs.map(function (sensor) {
+                        datasets: sensor_specs.map(function (sensor, index) {
+                            let styles = [
+                                { dash: [], point: 'circle' },
+                                { dash: [6, 4], point: 'triangle' },
+                                { dash: [2, 3], point: 'rect' },
+                                { dash: [8, 3, 2, 3], point: 'rectRot' },
+                                { dash: [1, 2], point: 'crossRot' }
+                            ];
+                            let style = styles[index % styles.length];
                             return {
                                 label: sensor.label,
                                 backgroundColor: color(sensor.color).alpha(0.5).rgbString(),
                                 borderColor: sensor.color,
                                 fill: false,
-                                pointRadius: 0,
+                                borderDash: style.dash,
+                                pointStyle: style.point,
+                                pointRadius: 2,
                                 data: new Array(time_horizon_secs).fill(null)
                             };
                         })
                     },
                     options: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
                         scales: {
                             xAxes: [{
                                 scaleLabel: {

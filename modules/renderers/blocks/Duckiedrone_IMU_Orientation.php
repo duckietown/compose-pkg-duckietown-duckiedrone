@@ -52,18 +52,25 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
 
     protected static function render($id, &$args) {
         ?>
-        <div class="duckiedrone-imu-toolbar">
-            <button type="button" class="btn btn-primary btn-sm" id="px4_calibrate_gyro">
-                <i class="fa fa-crosshairs" aria-hidden="true"></i>
-                GYRO
-            </button>
-            <button type="button" class="btn btn-info btn-sm" id="px4_calibrate_level">
-                <i class="fa fa-balance-scale" aria-hidden="true"></i>
-                LEVEL
-            </button>
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-imu resizable">
+            <div class="drone-imu-bar">
+                <div id="px4_calibration_status" class="duckiedrone-imu-status">PX4 calibration idle</div>
+                <div class="drone-imu-actions">
+                    <button type="button" class="btn btn-primary btn-sm" id="px4_calibrate_gyro">
+                        <i class="fa fa-crosshairs" aria-hidden="true"></i>
+                        GYRO
+                    </button>
+                    <button type="button" class="btn btn-info btn-sm" id="px4_calibrate_level">
+                        <i class="fa fa-balance-scale" aria-hidden="true"></i>
+                        LEVEL
+                    </button>
+                </div>
+            </div>
+            <div class="drone-chart-wrap">
+                <canvas class="drone-chart duckiedrone-imu-chart"></canvas>
+            </div>
         </div>
-        <div id="px4_calibration_status" class="duckiedrone-imu-status">PX4 calibration idle</div>
-        <canvas class="resizable duckiedrone-imu-chart"></canvas>
         <?php
         $ros_hostname = $args['ros_hostname'] ?? null;
         $ros_hostname = ROS::sanitize_hostname($ros_hostname);
@@ -155,22 +162,39 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                             backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.red,
                             fill: true,
+                            borderDash: [],
+                            pointStyle: 'circle',
+                            pointRadius: 2,
+                            pointHoverRadius: 3,
                             data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Pitch',
                             backgroundColor: color(window.chartColors.green).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.green,
                             fill: true,
+                            borderDash: [6, 4],
+                            pointStyle: 'triangle',
+                            pointRadius: 2,
+                            pointHoverRadius: 3,
                             data: new Array(time_horizon_secs).fill(0)
                         }, {
                             label: 'Yaw',
                             backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
                             borderColor: window.chartColors.blue,
                             fill: true,
+                            borderDash: [2, 3],
+                            pointStyle: 'rect',
+                            pointRadius: 2,
+                            pointHoverRadius: 3,
                             data: new Array(time_horizon_secs).fill(0)
                         }]
                     },
                     options: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
                         scales: {
                             xAxes: [{
                                 scaleLabel: {
@@ -185,7 +209,10 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
                                 ticks: {
                                     suggestedMin: -180,
                                     suggestedMax: 180,
-                                    stepSize: 45
+                                    // 90deg steps avoid overlapping 180/135/90/45 labels
+                                    // in the short IMU card.
+                                    stepSize: 90,
+                                    maxTicksLimit: 5
                                 }
                             }]
                         },
@@ -271,55 +298,6 @@ class Duckiedrone_IMU_Orientation extends BlockRenderer {
         <?php
         ROS::connect($ros_hostname);
         ?>
-
-        <style type="text/css">
-            #<?php echo $id ?> .duckiedrone-imu-toolbar {
-                position: absolute;
-                right: 8px;
-                top: 45px;
-                z-index: 2;
-                display: flex;
-                gap: 6px;
-            }
-            #<?php echo $id ?> .duckiedrone-imu-toolbar .btn {
-                min-width: 72px;
-                font-size: 9pt;
-            }
-            #<?php echo $id ?> .duckiedrone-imu-status {
-                position: absolute;
-                left: 16px;
-                right: 176px;
-                top: 48px;
-                min-height: 31px;
-                max-height: 58px;
-                overflow: auto;
-                white-space: normal;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 4px 8px;
-                background: #fafafa;
-                color: #333;
-                font-size: 8pt;
-                line-height: 1.2;
-                z-index: 2;
-            }
-            #<?php echo $id ?> .duckiedrone-imu-status-error {
-                color: #a94442;
-                border-color: #ebccd1;
-                background: #f2dede;
-            }
-            #<?php echo $id ?> .duckiedrone-imu-status-success {
-                color: #3c763d;
-                border-color: #d6e9c6;
-                background: #dff0d8;
-            }
-            #<?php echo $id ?> .duckiedrone-imu-chart {
-                width: 100%;
-                height: 95%;
-                min-height: 150px;
-                padding: 44px 16px 6px 16px;
-            }
-        </style>
         <?php
     }//render
 }

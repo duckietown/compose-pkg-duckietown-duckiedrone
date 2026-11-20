@@ -33,16 +33,27 @@ class Duckiedrone_Heartbeat extends BlockRenderer {
         "background_color" => [
             "name" => "Background color",
             "type" => "color",
-            "mandatory" => True,
-            "default" => "#fff"
+            "mandatory" => False,
+            "default" => ""
         ]
     ];
     
     protected static function render($id, &$args) {
+        // Only apply an explicit custom color. Transparent / white / empty
+        // must not override the shared white .mission-control-item card.
+        $bg = trim((string) ($args['background_color'] ?? ''));
+        $bg_l = strtolower($bg);
+        if ($bg_l === '' || $bg_l === 'transparent' || $bg_l === '#fff' || $bg_l === '#ffffff' || $bg_l === 'white') {
+            $bg = '';
+        }
         ?>
-        <div id="block_content">
-            <img class="resizable" style="height: 100%"
-                 src="<?php echo Core::getImageURL('heartbeat.gif', 'duckietown_duckiedrone') ?>">
+        <link rel="stylesheet" href="<?php echo Core::getCSSstylesheetURL('drone_mission.css', 'duckietown_duckiedrone') ?>">
+        <div class="drone-hb-pulse resizable">
+            <div class="drone-hb-pulse-card">
+                <img src="<?php echo Core::getImageURL('heartbeat.gif', 'duckietown_duckiedrone') ?>"
+                     alt="Joystick heartbeat">
+                <span class="drone-hb-pulse-label">Publishing</span>
+            </div>
         </div>
         
         <?php
@@ -56,7 +67,7 @@ class Duckiedrone_Heartbeat extends BlockRenderer {
 
         <script type="text/javascript">
             $(document).on("<?php echo $connected_evt ?>", function (evt) {
-                // Subscribe to the CompressedImage topic
+                // Publish joystick heartbeat so onboard watchers stay alive.
                 let topic = new ROSLIB.Topic({
                     ros: window.ros['<?php echo $ros_hostname ?>'],
                     name: '<?php echo $args['topic'] ?>',
@@ -75,11 +86,13 @@ class Duckiedrone_Heartbeat extends BlockRenderer {
         ROS::connect($ros_hostname);
         ?>
 
+        <?php if ($bg !== '') { ?>
         <style type="text/css">
             #<?php echo $id ?>{
-                background-color: <?php echo $args['background_color'] ?>;
+                background-color: <?php echo htmlspecialchars($bg) ?>;
             }
         </style>
+        <?php } ?>
         <?php
     }//render
     
